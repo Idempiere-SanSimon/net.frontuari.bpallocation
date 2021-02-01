@@ -1,3 +1,16 @@
+/******************************************************************************
+ * Copyright (C) 2009 Low Heng Sin                                            *
+ * Copyright (C) 2009 Idalica Corporation                                     *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ *****************************************************************************/
 package net.frontuari.bpallocation.webui.apps.form;
 
 import java.math.BigDecimal;
@@ -32,24 +45,23 @@ import org.compiere.util.Util;
 
 import net.frontuari.bpallocation.base.FTUForm;
 
-public class FTUBPAllocation extends FTUForm {
-
+public class Allocation extends FTUForm
+{
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -4790962689984184556L;
+	private static final long serialVersionUID = 1L;
 
 	public DecimalFormat format = DisplayType.getNumberFormat(DisplayType.Amount);
 
 	/**	Logger			*/
-	public static CLogger log = CLogger.getCLogger(FTUBPAllocation.class);
+	public static final CLogger log = CLogger.getCLogger(Allocation.class);
 
 	private boolean     m_calculating = false;
 	public int         	m_C_Currency_ID = 0;
 	public int         m_C_Charge_ID = 0;
 	public int         m_C_DocType_ID = 0;
 	public int         	m_C_BPartner_ID = 0;
-	public int         	m_C_BPartner2_ID = 0;
 	private int         m_noInvoices = 0;
 	private int         m_noPayments = 0;
 	public BigDecimal	totalInv = Env.ZERO;
@@ -80,6 +92,7 @@ public class FTUBPAllocation extends FTUForm {
 		
 		m_AD_Org_ID = Env.getAD_Org_ID(Env.getCtx());
 		m_C_DocType_ID= MDocType.getDocType("CMA");
+		
 	}
 	
 	/**
@@ -95,7 +108,7 @@ public class FTUBPAllocation extends FTUForm {
 			return;
 
 		//	Async BPartner Test
-		Integer key = new Integer(m_C_BPartner_ID);
+		Integer key = Integer.valueOf(m_C_BPartner_ID);
 		if (!m_bpartnerCheck.contains(key))
 		{
 			new Thread()
@@ -104,34 +117,6 @@ public class FTUBPAllocation extends FTUForm {
 				{
 					MPayment.setIsAllocated (Env.getCtx(), m_C_BPartner_ID, null);
 					MInvoice.setIsPaid (Env.getCtx(), m_C_BPartner_ID, null);
-				}
-			}.start();
-			m_bpartnerCheck.add(key);
-		}
-	}
-	
-	/**
-	 *  Load Business Partner Info
-	 *  - Invoices
-	 *  - Payments
-	 */
-	public void checkBPartner2()
-	{		
-		if (log.isLoggable(Level.CONFIG)) log.config("BPartner=" + m_C_BPartner2_ID + ", Cur=" + m_C_Currency_ID);
-		//  Need to have both values
-		if (m_C_BPartner2_ID == 0 || m_C_Currency_ID == 0)
-			return;
-
-		//	Async BPartner Test
-		Integer key = new Integer(m_C_BPartner2_ID);
-		if (!m_bpartnerCheck.contains(key))
-		{
-			new Thread()
-			{
-				public void run()
-				{
-					MPayment.setIsAllocated (Env.getCtx(), m_C_BPartner2_ID, null);
-					MInvoice.setIsPaid (Env.getCtx(), m_C_BPartner2_ID, null);
 				}
 			}.start();
 			m_bpartnerCheck.add(key);
@@ -151,15 +136,13 @@ public class FTUBPAllocation extends FTUForm {
 			+ "currencyConvert(p.PayAmt,p.C_Currency_ID,?,p.DateTrx,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID),"//  6   #1, #2
 			+ "currencyConvert(paymentAvailable(C_Payment_ID),p.C_Currency_ID,?,p.DateTrx,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID),"  //  7   #3, #4
 			+ "p.MultiplierAP "
-			+ ",bp.Name " // 9
-			+ "FROM C_Payment_v p"		//	Corrected for AP/AR 
-			+ " INNER JOIN C_BPartner bp ON (p.C_BPartner_ID = bp.C_BPartner_ID) "
+			+ "FROM C_Payment_v p"		//	Corrected for AP/AR
 			+ " INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE p.IsAllocated='N' AND p.Processed='Y'"
 			+ " AND p.C_Charge_ID IS NULL"		//	Prepayments OK
-			+ " AND p.C_BPartner_ID IN (?,?)");                   		//      #5,#6
+			+ " AND p.C_BPartner_ID=?");                   		//      #5
 		if (!isMultiCurrency)
-			sql.append(" AND p.C_Currency_ID=?");				//      #7
+			sql.append(" AND p.C_Currency_ID=?");				//      #6
 		if (m_AD_Org_ID != 0 )
 			sql.append(" AND p.AD_Org_ID=" + m_AD_Org_ID);
 		sql.append(" ORDER BY p.DateTrx,p.DocumentNo");
@@ -178,30 +161,28 @@ public class FTUBPAllocation extends FTUForm {
 			pstmt.setInt(2, m_C_Currency_ID);
 			//pstmt.setTimestamp(4, (Timestamp)date);
 			pstmt.setInt(3, m_C_BPartner_ID);
-			pstmt.setInt(4, m_C_BPartner2_ID);
 			if (!isMultiCurrency)
-				pstmt.setInt(5, m_C_Currency_ID);
+				pstmt.setInt(4, m_C_Currency_ID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
 				Vector<Object> line = new Vector<Object>();
-				line.add(new Boolean(false));       //  0-Selection
+				line.add(Boolean.FALSE);       //  0-Selection
 				line.add(rs.getTimestamp(1));       //  1-TrxDate
 				KeyNamePair pp = new KeyNamePair(rs.getInt(3), rs.getString(2));
 				line.add(pp);                       //  2-DocumentNo
-				line.add(rs.getString(9));			//	3-BPartner
 				if (isMultiCurrency)
 				{
-					line.add(rs.getString(4));      //  4-Currency
-					line.add(rs.getBigDecimal(5));  //  5-PayAmt
+					line.add(rs.getString(4));      //  3-Currency
+					line.add(rs.getBigDecimal(5));  //  4-PayAmt
 				}
-				line.add(rs.getBigDecimal(6));      //  4/6-ConvAmt
+				line.add(rs.getBigDecimal(6));      //  3/5-ConvAmt
 				BigDecimal available = rs.getBigDecimal(7);
 				if (available == null || available.signum() == 0)	//	nothing available
 					continue;
-				line.add(available);				//  5/7-ConvOpen/Available
-				line.add(Env.ZERO);					//  6/8-Payment
-//				line.add(rs.getBigDecimal(8));		//  7/9-Multiplier
+				line.add(available);				//  4/6-ConvOpen/Available
+				line.add(Env.ZERO);					//  5/7-Payment
+//				line.add(rs.getBigDecimal(8));		//  6/8-Multiplier
 				//
 				data.add(line);
 			}
@@ -225,7 +206,6 @@ public class FTUBPAllocation extends FTUForm {
 		columnNames.add(Msg.getMsg(Env.getCtx(), "Select"));
 		columnNames.add(Msg.translate(Env.getCtx(), "Date"));
 		columnNames.add(Util.cleanAmp(Msg.translate(Env.getCtx(), "DocumentNo")));
-		columnNames.add(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 		if (isMultiCurrency)
 		{
 			columnNames.add(Msg.getMsg(Env.getCtx(), "TrxCurrency"));
@@ -245,19 +225,18 @@ public class FTUBPAllocation extends FTUForm {
 		paymentTable.setColumnClass(i++, Boolean.class, false);         //  0-Selection
 		paymentTable.setColumnClass(i++, Timestamp.class, true);        //  1-TrxDate
 		paymentTable.setColumnClass(i++, String.class, true);           //  2-Value
-		paymentTable.setColumnClass(i++, String.class, true);       	//  3-BPartner
 		if (isMultiCurrency)
 		{
-			paymentTable.setColumnClass(i++, String.class, true);       //  4-Currency
-			paymentTable.setColumnClass(i++, BigDecimal.class, true);   //  5-PayAmt
+			paymentTable.setColumnClass(i++, String.class, true);       //  3-Currency
+			paymentTable.setColumnClass(i++, BigDecimal.class, true);   //  4-PayAmt
 		}
-		paymentTable.setColumnClass(i++, BigDecimal.class, true);       //  6-ConvAmt
-		paymentTable.setColumnClass(i++, BigDecimal.class, true);       //  7-ConvOpen
-		paymentTable.setColumnClass(i++, BigDecimal.class, false);      //  8-Allocated
-//		paymentTable.setColumnClass(i++, BigDecimal.class, true);      	//  9-Multiplier
+		paymentTable.setColumnClass(i++, BigDecimal.class, true);       //  5-ConvAmt
+		paymentTable.setColumnClass(i++, BigDecimal.class, true);       //  6-ConvOpen
+		paymentTable.setColumnClass(i++, BigDecimal.class, false);      //  7-Allocated
+//		paymentTable.setColumnClass(i++, BigDecimal.class, true);      	//  8-Multiplier
 
 		//
-		i_payment = isMultiCurrency ? 8 : 6;
+		i_payment = isMultiCurrency ? 7 : 5;
 		
 
 		//  Table UI
@@ -290,12 +269,10 @@ public class FTUBPAllocation extends FTUForm {
 			+ "currencyConvert(invoiceDiscount"                               //  8       AllowedDiscount
 			+ "(i.C_Invoice_ID,?,C_InvoicePaySchedule_ID),i.C_Currency_ID,?,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID)*i.Multiplier*i.MultiplierAP,"               //  #5, #6
 			+ "i.MultiplierAP "
-			+ ",bp.Name " //	10
-			+ "FROM C_Invoice_v i"		//  corrected for CM/Split 
-			+ " INNER JOIN C_BPartner bp ON (i.C_BPartner_ID = bp.C_BPartner_ID) "
+			+ "FROM C_Invoice_v i"		//  corrected for CM/Split
 			+ " INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE i.IsPaid='N' AND i.Processed='Y'"
-			+ " AND i.C_BPartner_ID IN (?,?)");                                            //  #7
+			+ " AND i.C_BPartner_ID=?");                                            //  #7
 		if (!isMultiCurrency)
 			sql.append(" AND i.C_Currency_ID=?");                                   //  #8
 		if (m_AD_Org_ID != 0 ) 
@@ -318,35 +295,33 @@ public class FTUBPAllocation extends FTUForm {
 			pstmt.setTimestamp(3, (Timestamp)date);
 			pstmt.setInt(4, m_C_Currency_ID);
 			pstmt.setInt(5, m_C_BPartner_ID);
-			pstmt.setInt(6, m_C_BPartner2_ID);
 			if (!isMultiCurrency)
-				pstmt.setInt(7, m_C_Currency_ID);
+				pstmt.setInt(6, m_C_Currency_ID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
 				Vector<Object> line = new Vector<Object>();
-				line.add(new Boolean(false));       //  0-Selection
+				line.add(Boolean.FALSE);       //  0-Selection
 				line.add(rs.getTimestamp(1));       //  1-TrxDate
 				KeyNamePair pp = new KeyNamePair(rs.getInt(3), rs.getString(2));
 				line.add(pp);                       //  2-Value
-				line.add(rs.getString(10));      	//  3-BPartner
 				if (isMultiCurrency)
 				{
-					line.add(rs.getString(4));      //  4-Currency
-					line.add(rs.getBigDecimal(5));  //  5-Orig Amount
+					line.add(rs.getString(4));      //  3-Currency
+					line.add(rs.getBigDecimal(5));  //  4-Orig Amount
 				}
-				line.add(rs.getBigDecimal(6));      //  4/6-ConvAmt
+				line.add(rs.getBigDecimal(6));      //  3/5-ConvAmt
 				BigDecimal open = rs.getBigDecimal(7);
 				if (open == null)		//	no conversion rate
 					open = Env.ZERO;
-				line.add(open);      				//  5/7-ConvOpen
+				line.add(open);      				//  4/6-ConvOpen
 				BigDecimal discount = rs.getBigDecimal(8);
 				if (discount == null)	//	no concersion rate
 					discount = Env.ZERO;
-				line.add(discount);					//  6/8-ConvAllowedDisc
-				line.add(Env.ZERO);      			//  7/9-WriteOff
-				line.add(Env.ZERO);					// 8/10-Applied
-				line.add(open);				    //  9/11-OverUnder
+				line.add(discount);					//  5/7-ConvAllowedDisc
+				line.add(Env.ZERO);      			//  6/8-WriteOff
+				line.add(Env.ZERO);					// 7/9-Applied
+				line.add(open);				    //  8/10-OverUnder
 
 //				line.add(rs.getBigDecimal(9));		//	8/10-Multiplier
 				//	Add when open <> 0 (i.e. not if no conversion rate)
@@ -373,7 +348,6 @@ public class FTUBPAllocation extends FTUForm {
 		columnNames.add(Msg.getMsg(Env.getCtx(), "Select"));
 		columnNames.add(Msg.translate(Env.getCtx(), "Date"));
 		columnNames.add(Util.cleanAmp(Msg.translate(Env.getCtx(), "DocumentNo")));
-		columnNames.add(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 		if (isMultiCurrency)
 		{
 			columnNames.add(Msg.getMsg(Env.getCtx(), "TrxCurrency"));
@@ -396,18 +370,17 @@ public class FTUBPAllocation extends FTUForm {
 		invoiceTable.setColumnClass(i++, Boolean.class, false);         //  0-Selection
 		invoiceTable.setColumnClass(i++, Timestamp.class, true);        //  1-TrxDate
 		invoiceTable.setColumnClass(i++, String.class, true);           //  2-Value
-		invoiceTable.setColumnClass(i++, String.class, true);       	//  3-BPartner
 		if (isMultiCurrency)
 		{
-			invoiceTable.setColumnClass(i++, String.class, true);       //  4-Currency
-			invoiceTable.setColumnClass(i++, BigDecimal.class, true);   //  5-Amt
+			invoiceTable.setColumnClass(i++, String.class, true);       //  3-Currency
+			invoiceTable.setColumnClass(i++, BigDecimal.class, true);   //  4-Amt
 		}
-		invoiceTable.setColumnClass(i++, BigDecimal.class, true);       //  6-ConvAmt
-		invoiceTable.setColumnClass(i++, BigDecimal.class, true);       //  7-ConvAmt Open
-		invoiceTable.setColumnClass(i++, BigDecimal.class, false);      //  8-Conv Discount
-		invoiceTable.setColumnClass(i++, BigDecimal.class, false);      //  9-Conv WriteOff
-		invoiceTable.setColumnClass(i++, BigDecimal.class, false);      //  10-Conv OverUnder
-		invoiceTable.setColumnClass(i++, BigDecimal.class, true);		//	11-Conv Applied
+		invoiceTable.setColumnClass(i++, BigDecimal.class, true);       //  5-ConvAmt
+		invoiceTable.setColumnClass(i++, BigDecimal.class, true);       //  6-ConvAmt Open
+		invoiceTable.setColumnClass(i++, BigDecimal.class, false);      //  7-Conv Discount
+		invoiceTable.setColumnClass(i++, BigDecimal.class, false);      //  8-Conv WriteOff
+		invoiceTable.setColumnClass(i++, BigDecimal.class, false);      //  9-Conv OverUnder
+		invoiceTable.setColumnClass(i++, BigDecimal.class, true);		//	10-Conv Applied
 //		invoiceTable.setColumnClass(i++, BigDecimal.class, true);      	//  10-Multiplier
 		//  Table UI
 		invoiceTable.autoSize();
@@ -415,11 +388,11 @@ public class FTUBPAllocation extends FTUForm {
 	
 	public void calculate(boolean isMultiCurrency)
 	{
-		i_open = isMultiCurrency ? 7 : 5;
-		i_discount = isMultiCurrency ? 8 : 6;
-		i_writeOff = isMultiCurrency ? 9 : 7;
-		i_applied = isMultiCurrency ? 10 : 8;
-		i_overUnder = isMultiCurrency ? 11 : 9;
+		i_open = isMultiCurrency ? 6 : 4;
+		i_discount = isMultiCurrency ? 7 : 5;
+		i_writeOff = isMultiCurrency ? 8 : 6;
+		i_applied = isMultiCurrency ? 9 : 7;
+		i_overUnder = isMultiCurrency ? 10 : 8;
 //		i_multiplier = isMultiCurrency ? 10 : 8;
 	}   //  loadBPartner
 	
@@ -673,7 +646,7 @@ public class FTUBPAllocation extends FTUForm {
 				KeyNamePair pp = (KeyNamePair)payment.getValueAt(i, 2);   //  Value
 				//  Payment variables
 				int C_Payment_ID = pp.getKey();
-				paymentList.add(new Integer(C_Payment_ID));
+				paymentList.add(Integer.valueOf(C_Payment_ID));
 				//
 				BigDecimal PaymentAmt = (BigDecimal)payment.getValueAt(i, i_payment);  //  Applied Payment
 				amountList.add(PaymentAmt);
@@ -706,7 +679,6 @@ public class FTUBPAllocation extends FTUForm {
 				KeyNamePair pp = (KeyNamePair)invoice.getValueAt(i, 2);    //  Value
 				//  Invoice variables
 				int C_Invoice_ID = pp.getKey();
-				MInvoice inv = new MInvoice(Env.getCtx(), C_Invoice_ID, trxName);
 				BigDecimal AppliedAmt = (BigDecimal)invoice.getValueAt(i, i_applied);
 				//  semi-fixed fields (reset after first invoice)
 				BigDecimal DiscountAmt = (BigDecimal)invoice.getValueAt(i, i_discount);
@@ -721,37 +693,31 @@ public class FTUBPAllocation extends FTUForm {
 				for (int j = 0; j < paymentList.size() && AppliedAmt.signum() != 0; j++)
 				{
 					int C_Payment_ID = ((Integer)paymentList.get(j)).intValue();
-					MPayment pay = new MPayment(Env.getCtx(), C_Payment_ID, trxName);
-					if(pay.getC_BPartner_ID() == inv.getC_BPartner_ID())
-					{
-						BigDecimal PaymentAmt = (BigDecimal)amountList.get(j);
-						if (PaymentAmt.signum() == AppliedAmt.signum())	// only match same sign (otherwise appliedAmt increases)
-						{												// and not zero (appliedAmt was checked earlier)
-							if (log.isLoggable(Level.CONFIG)) log.config(".. with payment #" + j + ", Amt=" + PaymentAmt);
-							
-							BigDecimal amount = AppliedAmt;
-							if (amount.abs().compareTo(PaymentAmt.abs()) > 0)  // if there's more open on the invoice
-								amount = PaymentAmt;							// than left in the payment
-							
-							//	Allocation Line
-							MAllocationLine aLine = new MAllocationLine (alloc, amount, 
-								DiscountAmt, WriteOffAmt, OverUnderAmt);
-							aLine.setDocInfo((pay.getC_BPartner_ID() == 0 ? C_BPartner_ID : pay.getC_BPartner_ID()), C_Order_ID, C_Invoice_ID);
-							aLine.setPaymentInfo(C_Payment_ID, C_CashLine_ID);
-							aLine.saveEx();
+					BigDecimal PaymentAmt = (BigDecimal)amountList.get(j);
+					if (PaymentAmt.signum() == AppliedAmt.signum())	// only match same sign (otherwise appliedAmt increases)
+					{												// and not zero (appliedAmt was checked earlier)
+						if (log.isLoggable(Level.CONFIG)) log.config(".. with payment #" + j + ", Amt=" + PaymentAmt);
+						
+						BigDecimal amount = AppliedAmt;
+						if (amount.abs().compareTo(PaymentAmt.abs()) > 0)  // if there's more open on the invoice
+							amount = PaymentAmt;							// than left in the payment
+						
+						//	Allocation Line
+						MAllocationLine aLine = new MAllocationLine (alloc, amount, 
+							DiscountAmt, WriteOffAmt, OverUnderAmt);
+						aLine.setDocInfo(C_BPartner_ID, C_Order_ID, C_Invoice_ID);
+						aLine.setPaymentInfo(C_Payment_ID, C_CashLine_ID);
+						aLine.saveEx();
 
-							//  Apply Discounts and WriteOff only first time
-							DiscountAmt = Env.ZERO;
-							WriteOffAmt = Env.ZERO;
-							//  subtract amount from Payment/Invoice
-							AppliedAmt = AppliedAmt.subtract(amount);
-							PaymentAmt = PaymentAmt.subtract(amount);
-							if (log.isLoggable(Level.FINE)) log.fine("Allocation Amount=" + amount + " - Remaining  Applied=" + AppliedAmt + ", Payment=" + PaymentAmt);
-							amountList.set(j, PaymentAmt);  //  update
-						}	//	for all applied amounts
-					}
-					else
-						continue;
+						//  Apply Discounts and WriteOff only first time
+						DiscountAmt = Env.ZERO;
+						WriteOffAmt = Env.ZERO;
+						//  subtract amount from Payment/Invoice
+						AppliedAmt = AppliedAmt.subtract(amount);
+						PaymentAmt = PaymentAmt.subtract(amount);
+						if (log.isLoggable(Level.FINE)) log.fine("Allocation Amount=" + amount + " - Remaining  Applied=" + AppliedAmt + ", Payment=" + PaymentAmt);
+						amountList.set(j, PaymentAmt);  //  update
+					}	//	for all applied amounts
 				}	//	loop through payments for invoice
 				
 				if ( AppliedAmt.signum() == 0 && DiscountAmt.signum() == 0 && WriteOffAmt.signum() == 0)
@@ -762,7 +728,7 @@ public class FTUBPAllocation extends FTUForm {
 					//	Allocation Line
 					MAllocationLine aLine = new MAllocationLine (alloc, AppliedAmt, 
 						DiscountAmt, WriteOffAmt, OverUnderAmt);
-					aLine.setDocInfo(inv.getC_BPartner_ID(), C_Order_ID, C_Invoice_ID);
+					aLine.setDocInfo(C_BPartner_ID, C_Order_ID, C_Invoice_ID);
 					aLine.setPaymentInfo(C_Payment_ID, C_CashLine_ID);
 					aLine.saveEx();
 					if (log.isLoggable(Level.FINE)) log.fine("Allocation Amount=" + AppliedAmt);
@@ -777,14 +743,13 @@ public class FTUBPAllocation extends FTUForm {
 			if ( payAmt.signum() == 0 )
 					continue;
 			int C_Payment_ID = ((Integer)paymentList.get(i)).intValue();
-			MPayment pay = new MPayment(Env.getCtx(), C_Payment_ID, trxName);
 			if (log.isLoggable(Level.FINE)) log.fine("Payment=" + C_Payment_ID  
 					+ ", Amount=" + payAmt);
 
 			//	Allocation Line
 			MAllocationLine aLine = new MAllocationLine (alloc, payAmt, 
 				Env.ZERO, Env.ZERO, Env.ZERO);
-			aLine.setDocInfo((pay.getC_BPartner_ID() == 0 ? C_BPartner_ID : pay.getC_BPartner_ID()), 0, 0);
+			aLine.setDocInfo(C_BPartner_ID, 0, 0);
 			aLine.setPaymentInfo(C_Payment_ID, 0);
 			aLine.saveEx();
 			unmatchedApplied = unmatchedApplied.subtract(payAmt);
@@ -853,16 +818,15 @@ public class FTUBPAllocation extends FTUForm {
 		MBPartner bpartner = new MBPartner(Env.getCtx(), m_C_BPartner_ID, trxName);
 		bpartner.setTotalOpenBalance();
 		bpartner.saveEx();
-		MBPartner bpartner2 = new MBPartner(Env.getCtx(), m_C_BPartner2_ID, trxName);
-		bpartner2.setTotalOpenBalance();
-		bpartner2.saveEx();
 		paymentList.clear();
 		amountList.clear();
 		
 		return alloc;
 	}   //  saveData
-	
+
 	@Override
 	protected void initForm() {
+		// TODO Auto-generated method stub
+		
 	}
 }
