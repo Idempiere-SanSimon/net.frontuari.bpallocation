@@ -20,6 +20,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.Vector;
 import java.util.logging.Level;
 
@@ -83,6 +86,14 @@ public class Allocation extends FTUForm
 	public int         	m_AD_Org_ID = 0;
 
 	private ArrayList<Integer>	m_bpartnerCheck = new ArrayList<Integer>(); 
+	
+	//Added By Argenis Rodriguez 11-02-2021
+	protected HashMap<String, BigDecimal> maxOpenAmt = new HashMap<String, BigDecimal>(1);
+	
+	//Add Keys
+	protected static final String PAYMENT = "PAYMENT";
+	protected static final String INVOICE = "INVOICE";
+	//End By Argenis Rodriguez
 
 	public void dynInit() throws Exception
 	{
@@ -412,13 +423,14 @@ public class Allocation extends FTUForm
 		//  Payments
 		if (!isInvoice)
 		{
+			boolean isSelected = ((Boolean) payment.getValueAt(row, 0)).booleanValue();
 			BigDecimal open = (BigDecimal)payment.getValueAt(row, i_open);
 			BigDecimal applied = (BigDecimal)payment.getValueAt(row, i_payment);
 			
 			if (col == 0)
 			{
 				// selection of payment row
-				if (((Boolean)payment.getValueAt(row, 0)).booleanValue())
+				if (isSelected)
 				{
 					applied = open;   //  Open Amount
 					if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
@@ -426,8 +438,10 @@ public class Allocation extends FTUForm
 						applied = totalDiff.negate();						// reduce the amount applied to what's available
 					
 				}
-				else    //  de-selected
-					applied = Env.ZERO;
+				//Commented By Argenis Rodriguez
+				/*else    //  de-selected
+					applied = Env.ZERO;*/
+				//End By Argenis Rodriguez
 			}
 			
 			
@@ -440,6 +454,71 @@ public class Allocation extends FTUForm
 					if ( open.abs().compareTo( applied.abs() ) < 0 )
 						applied = open;
 			}
+			
+			//Added By Argenis Rodriguez 11-02-2021
+			if (isSelected)
+			{
+				if (maxOpenAmt.isEmpty())
+					maxOpenAmt.put(PAYMENT, applied);
+				else if (maxOpenAmt.containsKey(PAYMENT))
+				{
+					BigDecimal paymentApplied = getTotalAppliedPaymentTable(payment, row);
+					BigDecimal invoiceApplied = getTotalAppliedInvoiceTable(invoice);
+					
+					if (invoiceApplied.compareTo(paymentApplied.add(applied)) > 0)
+					{
+						applied = open;   //  Open Amount
+						if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
+								&& totalDiff.signum() == -applied.signum() )    	// and the available amount has the opposite sign
+							applied = totalDiff.negate();						// reduce the amount applied to what's available
+					}
+					
+					maxOpenAmt.put(PAYMENT, paymentApplied.add(applied).subtract(invoiceApplied));
+				}
+				else if (maxOpenAmt.containsKey(INVOICE))
+				{
+					BigDecimal totalAppliedInvoice = getTotalAppliedInvoiceTable(invoice);
+					BigDecimal totalApplied = getTotalAppliedPaymentTable(payment, row);
+					BigDecimal totalAppliedPayment = totalApplied.add(applied);
+					BigDecimal maxOpenAmtInvoiceApply = Optional.ofNullable(maxOpenAmt.get(INVOICE))
+							.orElse(BigDecimal.ZERO);
+					
+					if (totalAppliedPayment.compareTo(totalAppliedInvoice) > 0)
+						applied = totalAppliedInvoice.subtract(totalApplied);
+					maxOpenAmt.put(INVOICE, maxOpenAmtInvoiceApply.subtract(applied));
+				}
+			}
+			else
+			{
+				if (maxOpenAmt.containsKey(PAYMENT))
+				{
+					BigDecimal totalAppliedPayment = Optional.ofNullable(maxOpenAmt.get(PAYMENT))
+							.orElse(BigDecimal.ZERO)
+							.subtract(applied);
+					
+					BigDecimal totalAppliedInvoice = getTotalAppliedInvoiceTable(invoice);
+					
+					if (totalAppliedInvoice.compareTo(totalAppliedPayment) > 0)
+						payment.setValueAt(true, row, 0);
+					else
+					{
+						if (BigDecimal.ZERO.compareTo(totalAppliedPayment) != 0)
+							maxOpenAmt.put(PAYMENT, totalAppliedPayment);
+						else
+							maxOpenAmt.clear();
+						applied = BigDecimal.ZERO;
+					}
+				}
+				else if (maxOpenAmt.containsKey(INVOICE))
+				{
+					BigDecimal totalAppliedInvoice = Optional.ofNullable(maxOpenAmt.get(INVOICE))
+							.orElse(BigDecimal.ZERO);
+					
+					maxOpenAmt.put(INVOICE, totalAppliedInvoice.add(applied));
+					applied = BigDecimal.ZERO;
+				}
+			}
+			//End By Argenis Rodriguez
 			
 			payment.setValueAt(applied, row, i_payment);
 		}
@@ -475,12 +554,14 @@ public class Allocation extends FTUForm
 					else
 						overUnder = open.subtract(applied.add(discount));
 				}
-				else    //  de-selected
+				//Commented By Argenis Rodriguez
+				/*else    //  de-selected
 				{
 					writeOff = Env.ZERO;
 					applied = Env.ZERO;
 					overUnder = Env.ZERO;
-				}
+				}*/
+				//End By Argenis Rodriguez
 			}
 			
 			// check entered values are sensible and possibly auto write-off
@@ -543,7 +624,103 @@ public class Allocation extends FTUForm
 			//	Warning if write Off > 30%
 			if (isAutoWriteOff && writeOff.doubleValue()/open.doubleValue() > .30)
 				msg = "AllocationWriteOffWarn";
+			
+			//Added By Argenis Rodriguez 11-02-2021
+			if (selected)
+			{
+				if (maxOpenAmt.isEmpty())
+					maxOpenAmt.put(INVOICE, discount.add(applied));
+				else if (maxOpenAmt.containsKey(INVOICE))
+				{
+					BigDecimal totalInvoiceApplied = getTotalAppliedInvoiceTable(invoice, row);
+					BigDecimal totalPaymentApplied = getTotalAppliedPaymentTable(payment);
+					
+					if (totalPaymentApplied.compareTo(totalInvoiceApplied.add(applied)) > 0)
+					{
+						applied = open;    //  Open Amount
+						applied = applied.subtract(discount);
+						writeOff = Env.ZERO;  //  to be sure
+						overUnder = Env.ZERO;
+						totalDiff = Env.ZERO;
+						
+						if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
+								&& totalDiff.signum() == applied.signum() )     	// and the available amount has the same sign
+							applied = totalDiff;									// reduce the amount applied to what's available
 
+						if ( isAutoWriteOff )
+							writeOff = open.subtract(applied.add(discount));
+						else
+							overUnder = open.subtract(applied.add(discount));
+					}
+					
+					maxOpenAmt.put(INVOICE, totalInvoiceApplied.add(applied).subtract(totalPaymentApplied));
+				}
+				else if (maxOpenAmt.containsKey(PAYMENT))
+				{
+					BigDecimal totalPaymentApplied = getTotalAppliedPaymentTable(payment);
+					BigDecimal maxOpenPaymentApplied = Optional.ofNullable(maxOpenAmt.get(PAYMENT))
+							.orElse(BigDecimal.ZERO);
+					
+					BigDecimal totalApplied = getTotalAppliedInvoiceTable(invoice, row);
+					BigDecimal totalInvoiceApplied = totalApplied.add(applied);
+					
+					if (totalInvoiceApplied.compareTo(totalPaymentApplied) > 0)
+					{
+						applied = totalPaymentApplied.subtract(totalApplied);
+						//applied = applied.subtract(discount);
+						writeOff = Env.ZERO;  //  to be sure
+						overUnder = Env.ZERO;
+						totalDiff = Env.ZERO;
+						
+						if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
+								&& totalDiff.signum() == applied.signum() )     	// and the available amount has the same sign
+							applied = totalDiff;									// reduce the amount applied to what's available
+						
+						if ( isAutoWriteOff )
+							writeOff = open.subtract(applied.add(discount));
+						else
+							overUnder = open.subtract(applied.add(discount));
+					}
+					
+					maxOpenAmt.put(PAYMENT, maxOpenPaymentApplied.subtract(applied));
+				}
+			}
+			else
+			{
+				if (maxOpenAmt.containsKey(INVOICE))
+				{
+					BigDecimal totalAppliedInvoice = Optional.ofNullable(maxOpenAmt.get(INVOICE))
+							.orElse(BigDecimal.ZERO)
+							.subtract(applied);
+					
+					BigDecimal totalAppliedPayment = getTotalAppliedPaymentTable(payment);
+					
+					if (totalAppliedPayment.compareTo(totalAppliedInvoice) > 0)
+						invoice.setValueAt(true, row, 0);
+					else
+					{
+						if (BigDecimal.ZERO.compareTo(totalAppliedInvoice) == 0)
+							maxOpenAmt.clear();
+						else
+							maxOpenAmt.put(INVOICE, totalAppliedInvoice);
+						writeOff = Env.ZERO;
+						applied = Env.ZERO;
+						overUnder = Env.ZERO;
+					}
+				}
+				else if (maxOpenAmt.containsKey(PAYMENT))
+				{
+					BigDecimal totalAppliedPayment = Optional.ofNullable(maxOpenAmt.get(PAYMENT))
+							.orElse(BigDecimal.ZERO);
+					
+					maxOpenAmt.put(PAYMENT, totalAppliedPayment.add(applied));
+					writeOff = Env.ZERO;
+					applied = Env.ZERO;
+					overUnder = Env.ZERO;
+				}
+			}
+			//End By Argenis Rodriguez
+			
 			invoice.setValueAt(discount, row, i_discount);
 			invoice.setValueAt(applied, row, i_applied);
 			invoice.setValueAt(writeOff, row, i_writeOff);
@@ -553,6 +730,86 @@ public class Allocation extends FTUForm
 		m_calculating = false;
 		
 		return msg;
+	}
+	
+	/**
+	 * @author Argenis Rodriguez
+	 * @param paymentTable
+	 * @param rowsExclude
+	 * @return
+	 */
+	protected BigDecimal getTotalAppliedPaymentTable(IMiniTable paymentTable, int ...rowsExclude) {
+		
+		int rowCount = paymentTable.getRowCount();
+		BigDecimal retVal = BigDecimal.ZERO;
+		
+		for (int i = 0; i < rowCount; i++)
+		{
+			boolean isSelected = ((Boolean) paymentTable.getValueAt(i, 0)).booleanValue();
+			
+			if (!isSelected
+					|| isPresent(i, rowsExclude))
+				continue;
+			
+			BigDecimal applied = getValueAsBigdecimal(paymentTable, i, i_payment);
+			
+			retVal = retVal.add(applied);
+		}
+		
+		return retVal;
+	}
+	
+	protected BigDecimal getTotalAppliedInvoiceTable(IMiniTable invoiceTable, int ...rowsExclude) {
+		
+		BigDecimal retVal = BigDecimal.ZERO;
+		int rowCount = invoiceTable.getRowCount();
+		
+		for (int i = 0; i < rowCount; i++)
+		{
+			boolean isSelected = ((Boolean) invoiceTable.getValueAt(i, 0)).booleanValue();
+			
+			if (!isSelected
+					|| isPresent(i, rowsExclude))
+				continue;
+			
+			BigDecimal applied = getValueAsBigdecimal(invoiceTable, i, i_applied);
+			/*BigDecimal writeOff = getValueAsBigdecimal(invoiceTable, i, i_writeOff);
+			BigDecimal discount = getValueAsBigdecimal(invoiceTable, i, i_discount);
+			BigDecimal overUnder = getValueAsBigdecimal(invoiceTable, i, i_overUnder);*/
+			
+			//retVal = retVal.add(applied).add(writeOff).add(discount).add(overUnder);
+			retVal = retVal.add(applied);
+		}
+		
+		return retVal;
+	}
+	
+	/**
+	 * @author Argenis Rodriguez
+	 * @param table
+	 * @param row
+	 * @param column
+	 * @return BigDecimal Value or ZERO if NULL
+	 */
+	protected static BigDecimal getValueAsBigdecimal(IMiniTable table, int row, int column) {
+		
+		return Optional.ofNullable((BigDecimal) table.getValueAt(row, column))
+				.orElse(BigDecimal.ZERO);
+	}
+	
+	/**
+	 * @author Argenis Rodriguez
+	 * @param row
+	 * @param rows
+	 * @return true if row is find else false
+	 */
+	protected static boolean isPresent(int row, int ...rows) {
+		
+		return Arrays
+				.stream(rows)
+				.filter(r -> r == row)
+				.findFirst()
+				.isPresent();
 	}
 	
 	/**
