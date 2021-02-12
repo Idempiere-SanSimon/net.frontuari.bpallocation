@@ -480,12 +480,10 @@ public class Allocation extends FTUForm
 					BigDecimal totalAppliedInvoice = getTotalAppliedInvoiceTable(invoice);
 					BigDecimal totalApplied = getTotalAppliedPaymentTable(payment, row);
 					BigDecimal totalAppliedPayment = totalApplied.add(applied);
-					BigDecimal maxOpenAmtInvoiceApply = Optional.ofNullable(maxOpenAmt.get(INVOICE))
-							.orElse(BigDecimal.ZERO);
 					
 					if (totalAppliedPayment.compareTo(totalAppliedInvoice) > 0)
 						applied = totalAppliedInvoice.subtract(totalApplied);
-					maxOpenAmt.put(INVOICE, maxOpenAmtInvoiceApply.subtract(applied));
+					maxOpenAmt.put(INVOICE, totalAppliedInvoice.subtract(totalApplied.add(applied)));
 				}
 			}
 			else
@@ -658,8 +656,6 @@ public class Allocation extends FTUForm
 				else if (maxOpenAmt.containsKey(PAYMENT))
 				{
 					BigDecimal totalPaymentApplied = getTotalAppliedPaymentTable(payment);
-					BigDecimal maxOpenPaymentApplied = Optional.ofNullable(maxOpenAmt.get(PAYMENT))
-							.orElse(BigDecimal.ZERO);
 					
 					BigDecimal totalApplied = getTotalAppliedInvoiceTable(invoice, row);
 					BigDecimal totalInvoiceApplied = totalApplied.add(applied);
@@ -682,7 +678,7 @@ public class Allocation extends FTUForm
 							overUnder = open.subtract(applied.add(discount));
 					}
 					
-					maxOpenAmt.put(PAYMENT, maxOpenPaymentApplied.subtract(applied));
+					maxOpenAmt.put(PAYMENT, totalPaymentApplied.subtract(totalApplied.add(applied)));
 				}
 			}
 			else
@@ -730,6 +726,25 @@ public class Allocation extends FTUForm
 		m_calculating = false;
 		
 		return msg;
+	}
+	
+	/**
+	 * @author Argenis Rodriguez
+	 * @param C_Invoice_ID
+	 * @return
+	 */
+	public static boolean isCreditMemo(int C_Invoice_ID) {
+		
+		StringBuffer sql = new StringBuffer("SELECT")
+					.append(" cd.DocBaseType")
+				.append(" FROM C_Invoice ci")
+				.append(" INNER JOIN C_DocType cd ON cd.C_DocType_ID = ci.C_DocType_ID")
+				.append(" WHERE ci.C_Invoice_ID = ?");
+		
+		String docBaseType = DB.getSQLValueString(null, sql.toString(), C_Invoice_ID);
+		
+		return MDocType.DOCBASETYPE_APCreditMemo.equals(docBaseType)
+				|| MDocType.DOCBASETYPE_ARCreditMemo.equals(docBaseType);
 	}
 	
 	/**
