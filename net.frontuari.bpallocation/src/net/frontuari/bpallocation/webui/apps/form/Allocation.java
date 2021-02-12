@@ -380,7 +380,7 @@ public class Allocation extends FTUForm
 		int i = 0;
 		invoiceTable.setColumnClass(i++, Boolean.class, false);         //  0-Selection
 		invoiceTable.setColumnClass(i++, Timestamp.class, true);        //  1-TrxDate
-		invoiceTable.setColumnClass(i++, String.class, true);           //  2-Value
+		invoiceTable.setColumnClass(i++, KeyNamePair.class, true);           //  2-Value
 		if (isMultiCurrency)
 		{
 			invoiceTable.setColumnClass(i++, String.class, true);       //  3-Currency
@@ -490,9 +490,7 @@ public class Allocation extends FTUForm
 			{
 				if (maxOpenAmt.containsKey(PAYMENT))
 				{
-					BigDecimal totalAppliedPayment = Optional.ofNullable(maxOpenAmt.get(PAYMENT))
-							.orElse(BigDecimal.ZERO)
-							.subtract(applied);
+					BigDecimal totalAppliedPayment = getTotalAppliedPaymentTable(payment, row);
 					
 					BigDecimal totalAppliedInvoice = getTotalAppliedInvoiceTable(invoice);
 					
@@ -501,7 +499,7 @@ public class Allocation extends FTUForm
 					else
 					{
 						if (BigDecimal.ZERO.compareTo(totalAppliedPayment) != 0)
-							maxOpenAmt.put(PAYMENT, totalAppliedPayment);
+							maxOpenAmt.put(PAYMENT, totalAppliedPayment.subtract(totalAppliedInvoice));
 						else
 							maxOpenAmt.clear();
 						applied = BigDecimal.ZERO;
@@ -685,9 +683,7 @@ public class Allocation extends FTUForm
 			{
 				if (maxOpenAmt.containsKey(INVOICE))
 				{
-					BigDecimal totalAppliedInvoice = Optional.ofNullable(maxOpenAmt.get(INVOICE))
-							.orElse(BigDecimal.ZERO)
-							.subtract(applied);
+					BigDecimal totalAppliedInvoice = getTotalAppliedInvoiceTable(invoice, row);
 					
 					BigDecimal totalAppliedPayment = getTotalAppliedPaymentTable(payment);
 					
@@ -698,7 +694,7 @@ public class Allocation extends FTUForm
 						if (BigDecimal.ZERO.compareTo(totalAppliedInvoice) == 0)
 							maxOpenAmt.clear();
 						else
-							maxOpenAmt.put(INVOICE, totalAppliedInvoice);
+							maxOpenAmt.put(INVOICE, totalAppliedInvoice.subtract(totalAppliedPayment));
 						writeOff = Env.ZERO;
 						applied = Env.ZERO;
 						overUnder = Env.ZERO;
