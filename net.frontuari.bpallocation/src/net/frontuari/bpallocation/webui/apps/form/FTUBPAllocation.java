@@ -697,7 +697,7 @@ public class FTUBPAllocation extends FTUForm {
 		alloc.setDescription(alloc.getDescriptionForManualAllocation(m_C_BPartner_ID, trxName));
 		//	Added by Jorge Colmenarez, 2021-07-22 17:04 
 		//	Support for set DateAcct for CurrentDate, and prevent WrongAllocationDate
-		alloc.setDateAcct(new Timestamp(System.currentTimeMillis()));
+		//alloc.setDateAcct(new Timestamp(System.currentTimeMillis()));
 		//	End Jorge Colmenarez
 		alloc.saveEx();
 		//	For all invoices
