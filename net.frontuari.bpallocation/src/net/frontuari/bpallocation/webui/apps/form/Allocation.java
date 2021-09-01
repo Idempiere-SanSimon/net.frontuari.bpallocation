@@ -464,14 +464,19 @@ public class Allocation extends FTUForm
 				{
 					BigDecimal paymentApplied = getTotalAppliedPaymentTable(payment, row);
 					BigDecimal invoiceApplied = getTotalAppliedInvoiceTable(invoice);
-					
-					if (invoiceApplied.compareTo(paymentApplied.add(applied)) > 0)
+					//	Added by Jorge Colmenarez 2021-09-01 16:58
+					//	Fixed bug when invoiceApplied its ZERO
+					if(invoiceApplied.compareTo(BigDecimal.ZERO) > 0)
 					{
-						applied = open;   //  Open Amount
-						if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
-								&& totalDiff.signum() == -applied.signum() )    	// and the available amount has the opposite sign
-							applied = totalDiff.negate();						// reduce the amount applied to what's available
+						if (invoiceApplied.compareTo(paymentApplied.add(applied)) > 0)
+						{
+							applied = open;   //  Open Amount
+							if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
+									&& totalDiff.signum() == -applied.signum() )    	// and the available amount has the opposite sign
+								applied = totalDiff.negate();						// reduce the amount applied to what's available
+						}
 					}
+					//	End Jorge Colmenarez
 					
 					maxOpenAmt.put(PAYMENT, paymentApplied.add(applied).subtract(invoiceApplied));
 				}
