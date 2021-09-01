@@ -635,24 +635,29 @@ public class Allocation extends FTUForm
 				{
 					BigDecimal totalInvoiceApplied = getTotalAppliedInvoiceTable(invoice, row);
 					BigDecimal totalPaymentApplied = getTotalAppliedPaymentTable(payment);
-					
-					if (totalPaymentApplied.compareTo(totalInvoiceApplied.add(applied)) > 0)
+					//	Added By Jorge Colmenarez, 2021-09-01 17:05
+					//	Fixed bug when totalPaymentApplied its ZERO
+					if(totalPaymentApplied.compareTo(BigDecimal.ZERO) > 0)
 					{
-						applied = open;    //  Open Amount
-						applied = applied.subtract(discount);
-						writeOff = Env.ZERO;  //  to be sure
-						overUnder = Env.ZERO;
-						totalDiff = Env.ZERO;
-						
-						if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
-								&& totalDiff.signum() == applied.signum() )     	// and the available amount has the same sign
-							applied = totalDiff;									// reduce the amount applied to what's available
+						if (totalPaymentApplied.compareTo(totalInvoiceApplied.add(applied)) > 0)
+						{
+							applied = open;    //  Open Amount
+							applied = applied.subtract(discount);
+							writeOff = Env.ZERO;  //  to be sure
+							overUnder = Env.ZERO;
+							totalDiff = Env.ZERO;
+							
+							if (totalDiff.abs().compareTo(applied.abs()) < 0			// where less is available to allocate than open
+									&& totalDiff.signum() == applied.signum() )     	// and the available amount has the same sign
+								applied = totalDiff;									// reduce the amount applied to what's available
 
-						if ( isAutoWriteOff )
-							writeOff = open.subtract(applied.add(discount));
-						else
-							overUnder = open.subtract(applied.add(discount));
+							if ( isAutoWriteOff )
+								writeOff = open.subtract(applied.add(discount));
+							else
+								overUnder = open.subtract(applied.add(discount));
+						}
 					}
+					//	End Jorge Colmenarez
 					
 					maxOpenAmt.put(INVOICE, totalInvoiceApplied.add(applied).subtract(totalPaymentApplied));
 				}
