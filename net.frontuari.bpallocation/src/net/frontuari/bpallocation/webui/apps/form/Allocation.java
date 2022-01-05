@@ -146,7 +146,8 @@ public class Allocation extends FTUForm
 			+ "c.ISO_Code,p.PayAmt,"                            //  4..5
 			+ "currencyConvert(p.PayAmt,p.C_Currency_ID,?,p.DateTrx,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID),"//  6   #1, #2
 			+ "currencyConvert(paymentAvailable(C_Payment_ID),p.C_Currency_ID,?,p.DateTrx,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID),"  //  7   #3, #4
-			+ "p.MultiplierAP "
+			+ "p.MultiplierAP " //	8
+			+ ",p.DateAcct "	//	9	//	Added by Jorge Colmenarez, 2022-01-05 16:39 RQ #0000225
 			+ "FROM C_Payment_v p"		//	Corrected for AP/AR
 			+ " INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE p.IsAllocated='N' AND p.Processed='Y'"
@@ -194,6 +195,8 @@ public class Allocation extends FTUForm
 				line.add(available);				//  4/6-ConvOpen/Available
 				line.add(Env.ZERO);					//  5/7-Payment
 //				line.add(rs.getBigDecimal(8));		//  6/8-Multiplier
+				//	Added by Jorge Colmenarez, 2022-01-05 16:41 RQ #0000225 
+				line.add(rs.getTimestamp(9));		//	9-DateAcct
 				//
 				data.add(line);
 			}
@@ -226,6 +229,8 @@ public class Allocation extends FTUForm
 		columnNames.add(Msg.getMsg(Env.getCtx(), "OpenAmt"));
 		columnNames.add(Msg.getMsg(Env.getCtx(), "AppliedAmt"));
 //		columnNames.add(" ");	//	Multiplier
+		//	Added by Jorge Colmenarez, 2022-01-05 16:44 RQ #0000225
+		columnNames.add(Msg.translate(Env.getCtx(), "DateAcct"));
 		
 		return columnNames;
 	}
@@ -246,6 +251,8 @@ public class Allocation extends FTUForm
 		paymentTable.setColumnClass(i++, BigDecimal.class, false);      //  7-Allocated
 //		paymentTable.setColumnClass(i++, BigDecimal.class, true);      	//  8-Multiplier
 
+		//	Added by Jorge Colmenarez, 2022-01-05 16:44 RQ #0000225
+		paymentTable.setColumnClass(i++, Timestamp.class, true);        //  9-DateAcct
 		//
 		i_payment = isMultiCurrency ? 7 : 5;
 		
@@ -279,7 +286,9 @@ public class Allocation extends FTUForm
 			+ "currencyConvert(invoiceOpen(C_Invoice_ID,C_InvoicePaySchedule_ID),i.C_Currency_ID,?,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID)*i.MultiplierAP, "  //  7   #3, #4  Converted Open
 			+ "currencyConvert(invoiceDiscount"                               //  8       AllowedDiscount
 			+ "(i.C_Invoice_ID,?,C_InvoicePaySchedule_ID),i.C_Currency_ID,?,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID)*i.Multiplier*i.MultiplierAP,"               //  #5, #6
-			+ "i.MultiplierAP "
+			+ "i.MultiplierAP "	//	9
+			//	Added by Jorge Colmenarez, 2022-01-05 16:46 RQ #0000225
+			+ ",i.DateAcct "	//	10
 			+ "FROM C_Invoice_v i"		//  corrected for CM/Split
 			+ " INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE i.IsPaid='N' AND i.Processed='Y'"
@@ -336,6 +345,8 @@ public class Allocation extends FTUForm
 
 //				line.add(rs.getBigDecimal(9));		//	8/10-Multiplier
 				//	Add when open <> 0 (i.e. not if no conversion rate)
+				//	Added by Jorge Colmenarez, 2022-01-05 16:46 RQ #0000225
+				line.add(rs.getTimestamp(10));       //  1-DateAcct
 				if (Env.ZERO.compareTo(open) != 0)
 					data.add(line);
 			}
@@ -371,6 +382,8 @@ public class Allocation extends FTUForm
 		columnNames.add(Msg.getMsg(Env.getCtx(), "AppliedAmt"));
 		columnNames.add(Msg.getMsg(Env.getCtx(), "OverUnderAmt"));
 //		columnNames.add(" ");	//	Multiplier
+		//	Added by Jorge Colmenarez, 2022-01-05 16:47 RQ #0000225
+		columnNames.add(Msg.translate(Env.getCtx(), "DateAcct"));
 		
 		return columnNames;
 	}
@@ -393,6 +406,8 @@ public class Allocation extends FTUForm
 		invoiceTable.setColumnClass(i++, BigDecimal.class, false);      //  9-Conv OverUnder
 		invoiceTable.setColumnClass(i++, BigDecimal.class, true);		//	10-Conv Applied
 //		invoiceTable.setColumnClass(i++, BigDecimal.class, true);      	//  10-Multiplier
+		//	Added by Jorge Colmenarez, 2022-01-05 16:47 RQ #0000225
+		invoiceTable.setColumnClass(i++, Timestamp.class, true);        //  1-DateAcct
 		//  Table UI
 		invoiceTable.autoSize();
 	}
