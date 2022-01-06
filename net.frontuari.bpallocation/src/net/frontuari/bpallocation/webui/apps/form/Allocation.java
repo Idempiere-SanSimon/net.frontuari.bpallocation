@@ -901,7 +901,7 @@ public class Allocation extends FTUForm
 	/**************************************************************************
 	 *  Save Data
 	 */
-	public MAllocationHdr saveData(int m_WindowNo, Object date, IMiniTable payment, IMiniTable invoice, String trxName)
+	public MAllocationHdr saveData(int m_WindowNo, Object date, Object dateAcct, IMiniTable payment, IMiniTable invoice, String trxName)
 	{
 		if (m_noInvoices + m_noPayments == 0)
 			return null;
@@ -913,6 +913,7 @@ public class Allocation extends FTUForm
 		int C_Order_ID = 0;
 		int C_CashLine_ID = 0;
 		Timestamp DateTrx = (Timestamp)date;
+		Timestamp DateAcct = (Timestamp)dateAcct;
 		int C_Currency_ID = m_C_Currency_ID;	//	the allocation currency
 		//
 		if (AD_Org_ID == 0)
@@ -961,7 +962,12 @@ public class Allocation extends FTUForm
 		alloc.setDescription(alloc.getDescriptionForManualAllocation(m_C_BPartner_ID, trxName));
 		//	Added by Jorge Colmenarez, 2021-07-22 17:04 
 		//	Support for set DateAcct for CurrentDate, and prevent WrongAllocationDate
-		alloc.setDateAcct(new Timestamp(System.currentTimeMillis()));
+		//	Added By Jorge Colmenarez, 2022-01-05 17:25 Support for RQ #0000225
+		boolean useSysDate = MSysConfig.getBooleanValue("ALLOCATION_USE_SYSDATE_FOR_DATEACCT", true, Env.getAD_Client_ID(Env.getCtx()));
+		if(useSysDate)
+			alloc.setDateAcct(new Timestamp(System.currentTimeMillis()));
+		else
+			alloc.setDateAcct(DateAcct);
 		//	End Jorge Colmenarez
 		alloc.saveEx();
 		//	For all invoices

@@ -57,6 +57,7 @@ import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -154,6 +155,8 @@ public class WAllocation extends Allocation
 	private Hlayout statusBar = new Hlayout();
 	private Label dateLabel = new Label();
 	private WDateEditor dateField = new WDateEditor();
+	private Label dateAcctLabel = new Label();
+	private WDateEditor dateAcctField = new WDateEditor();
 	private Checkbox autoWriteOff = new Checkbox();
 	private Label organizationLabel = new Label();
 	private WTableDirEditor organizationPick;
@@ -177,6 +180,7 @@ public class WAllocation extends Allocation
 		/////
 		
 		dateLabel.setText(Msg.getMsg(Env.getCtx(), "Date"));
+		dateAcctLabel.setText(Msg.getMsg(Env.getCtx(), "DateAcct"));
 		autoWriteOff.setSelected(false);
 		autoWriteOff.setText(Msg.getMsg(Env.getCtx(), "AutoWriteOff", true));
 		autoWriteOff.setTooltiptext(Msg.getMsg(Env.getCtx(), "AutoWriteOff", false));
@@ -315,6 +319,13 @@ public class WAllocation extends Allocation
 		bpartnerSearch.showMenu();
 		row.appendChild(dateLabel.rightAlign());
 		row.appendChild(dateField.getComponent());
+		
+		boolean useSysDate = MSysConfig.getBooleanValue("ALLOCATION_USE_SYSDATE_FOR_DATEACCT", true, Env.getAD_Client_ID(Env.getCtx()));
+		if(!useSysDate)
+		{
+			row.appendChild(dateAcctLabel.rightAlign());
+			row.appendChild(dateAcctField.getComponent());
+		}
 		
 		row.appendCellChild(organizationLabel.rightAlign());
 		ZKUpdateUtil.setHflex(organizationPick.getComponent(), "true");
@@ -469,6 +480,7 @@ public class WAllocation extends Allocation
 		cal.set(Calendar.MILLISECOND, 0);
 		dateField.setValue(new Timestamp(cal.getTimeInMillis()));
 		dateField.addValueChangeListener(this);
+		dateAcctField.setValue(new Timestamp(cal.getTimeInMillis()));
 
 		
 		//  Charge
@@ -742,7 +754,7 @@ public class WAllocation extends Allocation
 				public void run(String trxName)
 				{
 					statusBar.getChildren().clear();
-					allocation[0] = saveData(form.getWindowNo(), dateField.getValue(), paymentTable, invoiceTable, trxName);
+					allocation[0] = saveData(form.getWindowNo(), dateField.getValue(), dateAcctField.getValue(), paymentTable, invoiceTable, trxName);
 					
 				}
 			});
