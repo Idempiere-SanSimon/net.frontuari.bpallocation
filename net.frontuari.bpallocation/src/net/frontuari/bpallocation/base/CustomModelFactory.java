@@ -13,7 +13,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.bpallocation.base;
@@ -32,9 +32,9 @@ import org.compiere.util.Env;
 /**
  * Dynamic model factory
  */
-public abstract class FTUModelFactory implements IModelFactory {
+public abstract class CustomModelFactory implements IModelFactory {
 
-	private final static CLogger log = CLogger.getCLogger(FTUModelFactory.class);
+	private final static CLogger log = CLogger.getCLogger(CustomModelFactory.class);
 	private Hashtable<String, Class<?>> cacheModels = new Hashtable<String, Class<?>>();
 
 	/**
@@ -62,7 +62,7 @@ public abstract class FTUModelFactory implements IModelFactory {
 	/**
 	 * Default constructor
 	 */
-	public FTUModelFactory() {
+	public CustomModelFactory() {
 		initialize();
 	}
 

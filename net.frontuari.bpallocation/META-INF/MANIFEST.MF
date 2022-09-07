@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
 Bundle-Category: idempiere-plugin
 Bundle-ManifestVersion: 2
-Bundle-Name: net.frontuari.bpallocation
-Bundle-SymbolicName: net.frontuari.bpallocation;singleton:=true
-Bundle-Version: 7.1.0.qualifier
-Bundle-Vendor: Frontuari, C.A. <http://frontuari.net>
+Bundle-Name: bpallocation
+Bundle-SymbolicName: net.frontuari.bpallocation
+Bundle-Version: 8.2.0.qualifier
+Bundle-Vendor: Frontuari
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.apache.commons.lang3,
  org.adempiere.base,
@@ -27,4 +27,4 @@ Service-Component: OSGI-INF/ModelFactory.xml,
  OSGI-INF/FormFactory.xml
 Bundle-ClassPath: .,
  lib/freemarker.jar
-Bundle-Activator: org.adempiere.plugin.utils.AdempiereActivator
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator

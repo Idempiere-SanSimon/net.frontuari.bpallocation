@@ -13,17 +13,17 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.bpallocation.component;
 
-import net.frontuari.bpallocation.base.FTUProcessFactory;
+import net.frontuari.bpallocation.base.CustomProcessFactory;
 
 /**
  * Process Factory
  */
-public class ProcessFactory extends FTUProcessFactory {
+public class ProcessFactory extends CustomProcessFactory {
 
 	/**
 	 * For initialize class. Register the process to build

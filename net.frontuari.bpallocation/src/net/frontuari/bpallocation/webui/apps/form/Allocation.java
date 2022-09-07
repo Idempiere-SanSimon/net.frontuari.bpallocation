@@ -46,9 +46,10 @@ import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 
-import net.frontuari.bpallocation.base.FTUForm;
+import net.frontuari.bpallocation.base.CustomForm;
 
-public class Allocation extends FTUForm
+
+public class Allocation extends CustomForm
 {
 	/**
 	 * 

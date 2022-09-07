@@ -1,16 +1,16 @@
-# net.frontuari.bpallocation
+# bpallocation
 
-- Copyright: 2020 Frontuari, C.A. <http://frontuari.net>
-- Repository: https://github.com/frontuari/net.frontuari.bpallocation
+- Copyright: 2021 Frontuari
+- Repository: https://github.com/Frontuari/net.frontuari.bpallocation-8.2
 - License: GPL 2
 
 ## Description
 
-This plugins can allocate documents (Invoices and Payments) between two difference business partners.
+Put the plugin description here
 
 ## Contributors
 
-- Jorge Colmenarez - Frontuari, C.A. <jcolmenarez@frontuari.net>.
+- Put the contributor list here, format: Year Name <name@email.com>.
 
 ## Components
 
@@ -21,7 +21,7 @@ This plugins can allocate documents (Invoices and Payments) between two differen
 ## Prerequisites
 
 - Java 11, commands `java` and `javac`.
-- iDempiere 7.1.0
+- iDempiere 8.2.0
 - Set `IDEMPIERE_REPOSITORY` env variable
 
 ## Features/Documentation

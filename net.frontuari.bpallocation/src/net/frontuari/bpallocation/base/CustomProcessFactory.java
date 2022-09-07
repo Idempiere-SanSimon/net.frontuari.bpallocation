@@ -13,7 +13,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.bpallocation.base;
@@ -21,25 +21,25 @@ package net.frontuari.bpallocation.base;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.adempiere.base.IProcessFactory;
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.webui.factory.IFormFactory;
-import org.adempiere.webui.panel.ADForm;
+import org.compiere.process.ProcessCall;
 import org.compiere.util.CLogger;
 
 /**
- * Dynamic form factory
+ * Dynamic process factory
  */
-public abstract class FTUFormFactory implements IFormFactory {
+public abstract class CustomProcessFactory implements IProcessFactory {
 
-	private final static CLogger log = CLogger.getCLogger(FTUFormFactory.class);
-	private List<Class<? extends FTUForm>> cacheForm = new ArrayList<Class<? extends FTUForm>>();
+	private final static CLogger log = CLogger.getCLogger(CustomProcessFactory.class);
+	private List<Class<? extends CustomProcess>> cacheProcess = new ArrayList<Class<? extends CustomProcess>>();
 
 	/**
-	 * For initialize class. Register the custom forms to build
+	 * For initialize class. Register the process to build
 	 * 
 	 * <pre>
 	 * protected void initialize() {
-	 * 	registerForm(FPrintPluginInfo.class);
+	 * 	registerProcess(PPrintPluginInfo.class);
 	 * }
 	 * </pre>
 	 */
@@ -50,30 +50,28 @@ public abstract class FTUFormFactory implements IFormFactory {
 	 * 
 	 * @param processClass Process class to register
 	 */
-	protected void registerForm(Class<? extends FTUForm> formClass) {
-		cacheForm.add(formClass);
-		log.info(String.format("CustomForm registered -> %s", formClass.getName()));
+	protected void registerProcess(Class<? extends CustomProcess> processClass) {
+		cacheProcess.add(processClass);
+		log.info(String.format("CustomProcess registered -> %s", processClass.getName()));
 	}
 
 	/**
 	 * Default constructor
 	 */
-	public FTUFormFactory() {
+	public CustomProcessFactory() {
 		initialize();
 	}
 
 	@Override
-	public ADForm newFormInstance(String formName) {
-		for (int i = 0; i < cacheForm.size(); i++) {
-			if (formName.equals(cacheForm.get(i).getName())) {
+	public ProcessCall newProcessInstance(String className) {
+		for (int i = 0; i < cacheProcess.size(); i++) {
+			if (className.equals(cacheProcess.get(i).getName())) {
 				try {
-					FTUForm customForm = cacheForm.get(i).getConstructor().newInstance();
-					log.info(String.format("CustomForm created -> %s", formName));
-					ADForm adForm = customForm.getForm();
-					adForm.setICustomForm(customForm);
-					return adForm;
+					CustomProcess customProcess = cacheProcess.get(i).getConstructor().newInstance();
+					log.info(String.format("CustomProcess created -> %s", className));
+					return customProcess;
 				} catch (Exception e) {
-					log.severe(String.format("Class %s can not be instantiated, Exception: %s", formName, e));
+					log.severe(String.format("Class %s can not be instantiated, Exception: %s", className, e));
 					throw new AdempiereException(e);
 				}
 			}

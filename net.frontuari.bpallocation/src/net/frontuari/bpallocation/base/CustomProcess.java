@@ -13,7 +13,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.bpallocation.base;
@@ -24,7 +24,7 @@ import org.compiere.process.SvrProcess;
 /**
  * Custom Process
  */
-public abstract class FTUProcess extends SvrProcess {
+public abstract class CustomProcess extends SvrProcess {
 
 	/**
 	 * Get parameter

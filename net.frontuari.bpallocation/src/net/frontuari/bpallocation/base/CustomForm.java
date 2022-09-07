@@ -13,7 +13,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2020 Frontuari, C.A. <http://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2021 Frontuari and contributors (see README.md file).
  */
 
 package net.frontuari.bpallocation.base;
@@ -26,7 +26,7 @@ import org.zkoss.zk.ui.event.EventListener;
 /**
  * Custom class for forms
  */
-public abstract class FTUForm extends ADForm implements IFormController, EventListener<Event> {
+public abstract class CustomForm extends ADForm implements IFormController, EventListener<Event> {
 
 	private static final long serialVersionUID = 1393259812994414770L;
 
