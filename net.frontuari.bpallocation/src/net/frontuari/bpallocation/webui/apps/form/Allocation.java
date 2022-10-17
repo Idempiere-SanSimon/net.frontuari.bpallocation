@@ -146,7 +146,8 @@ public class Allocation extends FTUForm
 			+ "c.ISO_Code,p.PayAmt,"                            //  4..5
 			+ "currencyConvert(p.PayAmt,p.C_Currency_ID,?,p.DateTrx,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID),"//  6   #1, #2
 			+ "currencyConvert(paymentAvailable(C_Payment_ID),p.C_Currency_ID,?,p.DateTrx,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID),"  //  7   #3, #4
-			+ "p.MultiplierAP "
+			+ "p.MultiplierAP " // 8 
+			+ ",p.Description " // 9 Added by Jorge Colmenarez, 2022-10-17 17:32
 			+ "FROM C_Payment_v p"		//	Corrected for AP/AR
 			+ " INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE p.IsAllocated='N' AND p.Processed='Y'"
@@ -194,6 +195,10 @@ public class Allocation extends FTUForm
 				line.add(available);				//  4/6-ConvOpen/Available
 				line.add(Env.ZERO);					//  5/7-Payment
 //				line.add(rs.getBigDecimal(8));		//  6/8-Multiplier
+				//	Added By Jorge Colmenarez, 2022-10-17 17:33 
+				//	Add Description
+				line.add(rs.getString(9));
+				//	End Jorge Colmenarez
 				//
 				data.add(line);
 			}
@@ -226,6 +231,9 @@ public class Allocation extends FTUForm
 		columnNames.add(Msg.getMsg(Env.getCtx(), "OpenAmt"));
 		columnNames.add(Msg.getMsg(Env.getCtx(), "AppliedAmt"));
 //		columnNames.add(" ");	//	Multiplier
+		//	Added By Jorge Colmenarez, 2022-10-17 17:34 
+		columnNames.add(Msg.getMsg(Env.getCtx(), "Description"));
+		//	End Jorge Colmenarez
 		
 		return columnNames;
 	}
@@ -248,6 +256,9 @@ public class Allocation extends FTUForm
 
 		//
 		i_payment = isMultiCurrency ? 7 : 5;
+		//	Added By Jorge Colmenarez, 2022-10-17 17:34
+		paymentTable.setColumnClass(i++, String.class, true);           //  9-Description
+		//	End Jorge Colmenarez
 		
 
 		//  Table UI

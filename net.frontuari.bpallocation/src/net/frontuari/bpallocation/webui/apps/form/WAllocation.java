@@ -57,6 +57,7 @@ import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MAllocationHdr;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
+import org.compiere.model.MRole;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -93,6 +94,7 @@ public class WAllocation extends Allocation
 	 */
 	private static final long serialVersionUID = 1L;
 	private CustomForm form = new CustomForm();
+	private MRole role = null;
 	
 	/**
 	 *	Initialize Panel
@@ -102,6 +104,8 @@ public class WAllocation extends Allocation
 	public WAllocation()
 	{
 		Env.setContext(Env.getCtx(), form.getWindowNo(), "IsSOTrx", "Y");   //  defaults to no
+		int roleID = Env.getAD_Role_ID(Env.getCtx());
+		role = new MRole(Env.getCtx(), roleID, null);
 		try
 		{
 			super.dynInit();
@@ -334,7 +338,11 @@ public class WAllocation extends Allocation
 		else
 			cbox.setPack("end");
 		cbox.appendChild(multiCurrency);
-		cbox.appendChild(autoWriteOff);
+		//	Modified by Jorge Colmenarez, 2022-10-17 17:29
+		//	Check if UserRole can user AutoWriteOff
+		if(role.get_ValueAsBoolean("CanUseAutoWriteOff"))
+			cbox.appendChild(autoWriteOff);
+		//	End Jorge Colmenarez
 		row.appendCellChild(cbox, 2);		
 		if (noOfColumn < 6)		
 			LayoutUtils.compactTo(parameterLayout, noOfColumn);
