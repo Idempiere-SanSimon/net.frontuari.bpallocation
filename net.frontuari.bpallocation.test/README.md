@@ -1,4 +1,4 @@
-# bpallocation - Test
+# net.frontuari.bpallocation - Test
 
 This fragment allows you to test your plugin with Junit 5.
 

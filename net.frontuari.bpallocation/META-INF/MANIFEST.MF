@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-Category: idempiere-plugin
 Bundle-ManifestVersion: 2
-Bundle-Name: Payment Allocation
-Bundle-SymbolicName: net.frontuari.bpallocation;singleton:=true
-Bundle-Version: 8.2.0.qualifier
+Bundle-Name: net.frontuari.bpallocation
+Bundle-SymbolicName: net.frontuari.bpallocation
+Bundle-Version: 9.0.0.qualifier
 Bundle-Vendor: Frontuari, C.A. <https://frontuari.net>
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.apache.commons.lang3,

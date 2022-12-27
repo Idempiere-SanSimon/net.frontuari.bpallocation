@@ -1,4 +1,4 @@
-# bpallocation
+# net.frontuari.bpallocation
 
 ## Standard
 
