@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-Category: idempiere-plugin
 Bundle-ManifestVersion: 2
-Bundle-Name: BPartner Allocation
+Bundle-Name: BP Allocation
 Bundle-SymbolicName: net.frontuari.bpallocation
-Bundle-Version: 9.0.0.qualifier
+Bundle-Version: 10.0.0.qualifier
 Bundle-Vendor: Frontuari, C.A. <https://frontuari.net>
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.apache.commons.lang3,
@@ -18,8 +18,7 @@ Require-Bundle: org.apache.commons.lang3,
  zkplus,
  zul,
  zweb
-Import-Package: org.compiere.minigrid,
- org.osgi.service.event
+Import-Package: org.osgi.service.event
 Service-Component: OSGI-INF/ModelFactory.xml,
  OSGI-INF/EventFactory.xml,
  OSGI-INF/CalloutFactory.xml,
@@ -28,4 +27,3 @@ Service-Component: OSGI-INF/ModelFactory.xml,
 Bundle-ClassPath: .,
  lib/freemarker.jar
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
-Automatic-Module-Name: net.frontuari.bpallocation
