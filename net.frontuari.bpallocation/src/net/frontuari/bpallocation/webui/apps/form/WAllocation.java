@@ -180,7 +180,7 @@ public class WAllocation extends Allocation
 		/////
 		
 		dateLabel.setText(Msg.getMsg(Env.getCtx(), "Date"));
-		dateAcctLabel.setText(Msg.getMsg(Env.getCtx(), "DateAcct"));
+		dateAcctLabel.setText(Msg.translate(Env.getCtx(), "DateAcct"));
 		autoWriteOff.setSelected(false);
 		autoWriteOff.setText(Msg.getMsg(Env.getCtx(), "AutoWriteOff", true));
 		autoWriteOff.setTooltiptext(Msg.getMsg(Env.getCtx(), "AutoWriteOff", false));
