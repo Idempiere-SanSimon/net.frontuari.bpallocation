@@ -134,7 +134,7 @@ public class Allocation extends FTUForm
 		}
 	}
 	
-	public Vector<Vector<Object>> getPaymentData(boolean isMultiCurrency, Object date, IMiniTable paymentTable)
+	public Vector<Vector<Object>> getPaymentData(boolean isMultiCurrency, Object date, IMiniTable paymentTable, String IsSOTrx)
 	{		
 		/********************************
 		 *  Load unallocated Payments
@@ -157,6 +157,14 @@ public class Allocation extends FTUForm
 			sql.append(" AND p.C_Currency_ID=?");				//      #6
 		if (m_AD_Org_ID != 0 )
 			sql.append(" AND p.AD_Org_ID=" + m_AD_Org_ID);
+		//	Added By Jorge Colmenarez, 2023-08-11 15:48
+		//	Support for Ticket #0000668
+		if(!IsSOTrx.equals("B"))
+			sql.append(" AND p.IsReceipt = '"+IsSOTrx+"' ");
+		boolean usedate = MSysConfig.getBooleanValue("ALLOCATION_USE_DATEASFILTER", false, Env.getAD_Client_ID(Env.getCtx()));
+		if(usedate && date != null)
+			sql.append(" AND p.DateTrx = '"+date.toString()+"' ");
+		//	End Jorge Colmenarez
 		sql.append(" ORDER BY p.DateTrx,p.DocumentNo");
 		
 		// role security
@@ -261,7 +269,7 @@ public class Allocation extends FTUForm
 		paymentTable.autoSize();
 	}
 	
-	public Vector<Vector<Object>> getInvoiceData(boolean isMultiCurrency, Object date, IMiniTable invoiceTable)
+	public Vector<Vector<Object>> getInvoiceData(boolean isMultiCurrency, Object date, IMiniTable invoiceTable, String IsSOTrx)
 	{
 		/********************************
 		 *  Load unpaid Invoices
@@ -297,6 +305,11 @@ public class Allocation extends FTUForm
 			sql.append(" AND i.C_Currency_ID=?");                                   //  #8
 		if (m_AD_Org_ID != 0 ) 
 			sql.append(" AND i.AD_Org_ID=" + m_AD_Org_ID);
+		//	Added By Jorge Colmenarez, 2023-08-11 15:48
+		//	Support for Ticket #0000668
+		if(!IsSOTrx.equals("B"))
+			sql.append(" AND i.IsSOTrx = '"+IsSOTrx+"' ");
+		//	End Jorge Colmenarez
 		sql.append(" ORDER BY i.DateInvoiced, i.DocumentNo");
 		if (log.isLoggable(Level.FINE)) log.fine("InvSQL=" + sql.toString());
 		

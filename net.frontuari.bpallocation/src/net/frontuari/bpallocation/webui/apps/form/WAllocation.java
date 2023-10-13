@@ -31,6 +31,7 @@ import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
+import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.DocumentLink;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -66,6 +67,7 @@ import org.compiere.util.TrxRunnable;
 import org.compiere.util.Util;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
@@ -74,7 +76,6 @@ import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Hlayout;
 import org.zkoss.zul.North;
 import org.zkoss.zul.South;
-
 import static org.adempiere.webui.ClientInfo.*;
 
 /**
@@ -161,6 +162,12 @@ public class WAllocation extends Allocation
 	private Label organizationLabel = new Label();
 	private WTableDirEditor organizationPick;
 	private int noOfColumn;
+	//	Added by Jorge Colmenarez, 2023-08-11 15:27
+	//	Request for Ticket #0000668
+	private Label trxTypeLabel = new Label();
+	private Combobox trxType = new Combobox();
+	private String m_IsSOTrx = "B";
+	//	End Jorge Colmenarez
 	
 	/**
 	 *  Static Init
@@ -180,7 +187,7 @@ public class WAllocation extends Allocation
 		/////
 		
 		dateLabel.setText(Msg.getMsg(Env.getCtx(), "Date"));
-		dateAcctLabel.setText(Msg.getMsg(Env.getCtx(), "DateAcct"));
+		dateAcctLabel.setText(Msg.translate(Env.getCtx(), "DateAcct"));
 		autoWriteOff.setSelected(false);
 		autoWriteOff.setText(Msg.getMsg(Env.getCtx(), "AutoWriteOff", true));
 		autoWriteOff.setTooltiptext(Msg.getMsg(Env.getCtx(), "AutoWriteOff", false));
@@ -211,7 +218,11 @@ public class WAllocation extends Allocation
 		allocCurrencyLabel.setText(".");
 		
 		organizationLabel.setText(Msg.translate(Env.getCtx(), "AD_Org_ID"));
-		
+		//	Added by Jorge Colmenarez, 2023-08-11 15:33
+		//	Request for Ticket #0000668
+		trxTypeLabel.setText(Msg.translate(Env.getCtx(),"IsSOTrx"));
+		trxType.addEventListener(Events.ON_CHANGE, this);
+		//	End Jorge Colmenarez
 		// parameters layout
 		North north = new North();
 		north.setBorder("none");
@@ -346,7 +357,17 @@ public class WAllocation extends Allocation
 			cbox.setPack("end");
 		cbox.appendChild(multiCurrency);
 		cbox.appendChild(autoWriteOff);
-		row.appendCellChild(cbox, 2);		
+		row.appendCellChild(cbox, 2);
+
+		//	Added by Jorge Colmenarez, 2023-08-11 15:36
+		//	Request for Ticket #0000668
+		boolean useTrxType = MSysConfig.getBooleanValue("ALLOCATION_USE_TRXTYPEFILTER", false, Env.getAD_Client_ID(Env.getCtx()));
+		if(useTrxType) {
+			row.appendCellChild(trxTypeLabel.rightAlign(),1);
+			ZKUpdateUtil.setHflex(trxType, "true");
+			row.appendCellChild(trxType,1);
+		}
+		//	End Jorge Colmenarez
 		if (noOfColumn < 6)		
 			LayoutUtils.compactTo(parameterLayout, noOfColumn);
 		else
@@ -461,6 +482,14 @@ public class WAllocation extends Allocation
 		organizationPick.setValue(Env.getAD_Org_ID(Env.getCtx()));
 		organizationPick.addValueChangeListener(this);
 		
+		//	Added by Jorge Colmenarez, 2023-08-11 15:40
+		//	Support for Ticket #0000668
+		trxType.appendItem("Ambos", 1);
+		trxType.appendItem("SI", 2);
+		trxType.appendItem("NO", 3);
+		trxType.setSelectedIndex(0);
+		//	End Jorge Colmenarez
+		
 		//  BPartner
 		AD_Column_ID = COLUMN_C_INVOICE_C_BPARTNER_ID;        //  C_Invoice.C_BPartner_ID
 		MLookup lookupBP = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.Search);
@@ -482,7 +511,6 @@ public class WAllocation extends Allocation
 		dateField.addValueChangeListener(this);
 		dateAcctField.setValue(new Timestamp(cal.getTimeInMillis()));
 
-		
 		//  Charge
 		AD_Column_ID = 61804;    //  C_AllocationLine.C_Charge_ID
 		MLookup lookupCharge = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.TableDir);
@@ -490,12 +518,12 @@ public class WAllocation extends Allocation
 		chargePick.setValue(Integer.valueOf(m_C_Charge_ID));
 		chargePick.addValueChangeListener(this);
 		
-	//  Charge
-			AD_Column_ID = 212213;    //  C_AllocationLine.C_Charge_ID
-			MLookup lookupDocType = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.TableDir);
-			DocTypePick = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
-			DocTypePick.setValue(Integer.valueOf(m_C_DocType_ID));
-			DocTypePick.addValueChangeListener(this);
+		//  DocType
+		AD_Column_ID = 212213;    //  C_Allocation.C_DocType_ID
+		MLookup lookupDocType = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.TableDir);
+		DocTypePick = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
+		DocTypePick.setValue(Integer.valueOf(m_C_DocType_ID));
+		DocTypePick.addValueChangeListener(this);
 			
 	}   //  dynInit
 	
@@ -557,6 +585,18 @@ public class WAllocation extends Allocation
 		{
 			loadBPartner();
 		}
+		//	Added by Jorge Colmenarez, 2023-08-11 15:44
+		//	Support for Ticket #0000668
+		else if(e.getTarget().equals(trxType)) {
+			if((Integer)trxType.getSelectedItem().getValue() == 2)
+				m_IsSOTrx = "Y";
+			else if((Integer)trxType.getSelectedItem().getValue() == 3)
+				m_IsSOTrx = "N";
+			else
+				m_IsSOTrx = "B";
+			loadBPartner();
+		}
+		//	End Jorge Colmenarez
 	}   //  actionPerformed
 
 	/**
@@ -647,6 +687,13 @@ public class WAllocation extends Allocation
 		//	Date for Multi-Currency
 		else if (name.equals("Date") && multiCurrency.isSelected())
 			loadBPartner();
+		//	Added By Jorge Colmenarez, 2023-08-11 15:48
+		//	Support for Ticket #0000668
+		else if(name.equals("Date") 
+				&& MSysConfig.getBooleanValue("ALLOCATION_USE_DATEASFILTER", false, Env.getAD_Client_ID(Env.getCtx()))) {
+			loadBPartner();
+		}
+		//	End Jorge Colmenarez
 	}   //  vetoableChange
 	
 	private void setAllocateButton() {
@@ -675,7 +722,7 @@ public class WAllocation extends Allocation
 	{
 		checkBPartner();
 		
-		Vector<Vector<Object>> data = getPaymentData(multiCurrency.isSelected(), dateField.getValue(), paymentTable);
+		Vector<Vector<Object>> data = getPaymentData(multiCurrency.isSelected(), dateField.getValue(), paymentTable, m_IsSOTrx);
 		Vector<String> columnNames = getPaymentColumnNames(multiCurrency.isSelected());
 		
 		paymentTable.clear();
@@ -690,7 +737,7 @@ public class WAllocation extends Allocation
 		setPaymentColumnClass(paymentTable, multiCurrency.isSelected());
 		//
 
-		data = getInvoiceData(multiCurrency.isSelected(), dateField.getValue(), invoiceTable);
+		data = getInvoiceData(multiCurrency.isSelected(), dateField.getValue(), invoiceTable, m_IsSOTrx);
 		columnNames = getInvoiceColumnNames(multiCurrency.isSelected());
 		
 		invoiceTable.clear();
