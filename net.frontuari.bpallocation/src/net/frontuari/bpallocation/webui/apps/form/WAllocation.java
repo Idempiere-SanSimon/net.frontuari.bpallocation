@@ -102,7 +102,7 @@ public class WAllocation extends Allocation
 	 */
 	public WAllocation()
 	{
-		Env.setContext(Env.getCtx(), form.getWindowNo(), "IsSOTrx", "Y");   //  defaults to no
+		Env.setContext(Env.getCtx(), form.getWindowNo(), "IsSOTrx", "X");   //  defaults to no
 		try
 		{
 			super.dynInit();
@@ -161,6 +161,14 @@ public class WAllocation extends Allocation
 	private Label organizationLabel = new Label();
 	private WTableDirEditor organizationPick;
 	private int noOfColumn;
+	//	Added by Jorge Colmenarez, 2024-01-15 17:48
+	//	Support request #12 GSS for filter by DocType Access of Payments and Invoices
+	private Checkbox docTypeFilter = new Checkbox();
+	private Label docTypePaymentLabel = new Label();
+	private WTableDirEditor docTypePaymentSearch = null;
+	private Label docTypeInvoiceLabel = new Label();
+	private WTableDirEditor docTypeInvoiceSearch = null;
+	//	End Jorge Colmenarez
 	
 	/**
 	 *  Static Init
@@ -211,6 +219,16 @@ public class WAllocation extends Allocation
 		allocCurrencyLabel.setText(".");
 		
 		organizationLabel.setText(Msg.translate(Env.getCtx(), "AD_Org_ID"));
+		//	Added by Jorge Colmenarez, 2024-01-15 17:48
+		//	Support request #12 GSS for filter by DocType Access of Payments and Invoices
+		if(filterbyDocType) {
+			docTypeFilter.setText(Msg.getMsg(Env.getCtx(), "docType.filter"));
+			docTypeFilter.setChecked(true);
+			docTypeFilter.addActionListener(this);
+			docTypePaymentLabel.setText(" " + Msg.translate(Env.getCtx(), "C_DocTypePayment_ID"));
+			docTypeInvoiceLabel.setText(" " + Msg.translate(Env.getCtx(), "C_DocTypeInvoice_ID"));
+		}
+		//	End Jorge Colmenarez
 		
 		// parameters layout
 		North north = new North();
@@ -352,6 +370,33 @@ public class WAllocation extends Allocation
 		else
 			LayoutUtils.expandTo(parameterLayout, noOfColumn, true);
 		
+		//	Added by Jorge Colmenarez, 2024-01-15 17:48
+		//	Support request #12 GSS for filter by DocType Access of Payments and Invoices
+		if(filterbyDocType) {
+			row = rows.newRow();
+			cbox = new Hbox();
+			cbox.setWidth("100%");
+			if (noOfColumn == 6)
+				cbox.setPack("center");
+			else
+				cbox.setPack("end");
+			cbox.appendChild(docTypeFilter);
+			row.appendCellChild(cbox, 2);
+			row.appendCellChild(docTypePaymentLabel.rightAlign());
+			ZKUpdateUtil.setHflex(docTypePaymentSearch.getComponent(), "true");
+			row.appendCellChild(docTypePaymentSearch.getComponent(),1);
+			docTypePaymentSearch.showMenu();
+			row.appendCellChild(docTypeInvoiceLabel.rightAlign());
+			ZKUpdateUtil.setHflex(docTypeInvoiceSearch.getComponent(), "true");
+			row.appendCellChild(docTypeInvoiceSearch.getComponent(),1);
+			docTypeInvoiceSearch.showMenu();
+			if (noOfColumn < 6)		
+				LayoutUtils.compactTo(parameterLayout, noOfColumn);
+			else
+				LayoutUtils.expandTo(parameterLayout, noOfColumn, true);
+		}
+		//	End Jorge Colmenarez
+		
 		// footer/allocations layout
 		South south = new South();
 		south.setBorder("none");
@@ -490,12 +535,25 @@ public class WAllocation extends Allocation
 		chargePick.setValue(Integer.valueOf(m_C_Charge_ID));
 		chargePick.addValueChangeListener(this);
 		
-	//  Charge
-			AD_Column_ID = 212213;    //  C_AllocationLine.C_Charge_ID
-			MLookup lookupDocType = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.TableDir);
-			DocTypePick = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
-			DocTypePick.setValue(Integer.valueOf(m_C_DocType_ID));
-			DocTypePick.addValueChangeListener(this);
+		//  Charge
+		AD_Column_ID = 212213;    //  C_AllocationLine.C_Charge_ID
+		MLookup lookupDocType = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.TableDir);
+		DocTypePick = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
+		DocTypePick.setValue(Integer.valueOf(m_C_DocType_ID));
+		DocTypePick.addValueChangeListener(this);
+		
+		//	Added by Jorge Colmenarez, 2024-01-15 17:48
+		//	Support request #12 GSS for filter by DocType Access of Payments and Invoices
+		if(filterbyDocType) {
+			AD_Column_ID = 5302;    //  C_Payment.C_DocType_ID
+			MLookup lookupDocTypePayment = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.TableDir);
+			docTypePaymentSearch = new WTableDirEditor("C_DocTypePayment_ID", false, false, true, lookupDocTypePayment);
+			docTypePaymentSearch.addValueChangeListener(this);
+			AD_Column_ID = 3781;    //  C_Invoice.C_DocTypeTarget_ID
+			MLookup lookupDocTypeInvoice = MLookupFactory.get (Env.getCtx(), form.getWindowNo(), 0, AD_Column_ID, DisplayType.TableDir);
+			docTypeInvoiceSearch = new WTableDirEditor("C_DocTypeInvoice_ID", false, false, true, lookupDocTypeInvoice);
+			docTypeInvoiceSearch.addValueChangeListener(this);
+		}
 			
 	}   //  dynInit
 	
@@ -647,6 +705,13 @@ public class WAllocation extends Allocation
 		//	Date for Multi-Currency
 		else if (name.equals("Date") && multiCurrency.isSelected())
 			loadBPartner();
+		//	Added by Jorge Colmenarez, 2024-01-18 11:00
+		//	Apply search when DocType Payment or Invoice Changed
+		if (name.equals("C_DocTypePayment_ID"))
+			loadBPartner();
+		if (name.equals("C_DocTypeInvoice_ID"))
+			loadBPartner();
+		//	End Jorge Colmenarez
 	}   //  vetoableChange
 	
 	private void setAllocateButton() {
@@ -674,8 +739,13 @@ public class WAllocation extends Allocation
 	private void loadBPartner ()
 	{
 		checkBPartner();
-		
-		Vector<Vector<Object>> data = getPaymentData(multiCurrency.isSelected(), dateField.getValue(), paymentTable);
+		//	Added by Jorge Colmenarez, 2024-01-18 11:04
+		//	Support for filter by Payment DocType
+		int docTypePaymentId = 0;
+		if(docTypePaymentSearch.getValue() != null)
+			docTypePaymentId = (Integer)docTypePaymentSearch.getValue();
+		Vector<Vector<Object>> data = getPaymentData(multiCurrency.isSelected(), dateField.getValue(), paymentTable, docTypeFilter.isSelected(), docTypePaymentId);
+		//	End Jorge Colmenarez
 		Vector<String> columnNames = getPaymentColumnNames(multiCurrency.isSelected());
 		
 		paymentTable.clear();
@@ -690,7 +760,13 @@ public class WAllocation extends Allocation
 		setPaymentColumnClass(paymentTable, multiCurrency.isSelected());
 		//
 
-		data = getInvoiceData(multiCurrency.isSelected(), dateField.getValue(), invoiceTable);
+		//	Added by Jorge Colmenarez, 2024-01-18 11:04
+		//	Support for filter by Invoice DocType
+		int docTypeInvoiceId = 0;
+		if(docTypeInvoiceSearch.getValue() != null)
+			docTypeInvoiceId = (Integer)docTypeInvoiceSearch.getValue();
+		data = getInvoiceData(multiCurrency.isSelected(), dateField.getValue(), invoiceTable, docTypeFilter.isSelected(), docTypeInvoiceId);
+		//	End Jorge Colmenarez
 		columnNames = getInvoiceColumnNames(multiCurrency.isSelected());
 		
 		invoiceTable.clear();

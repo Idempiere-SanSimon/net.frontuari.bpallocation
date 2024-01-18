@@ -95,6 +95,12 @@ public class Allocation extends CustomForm
 	protected static final String PAYMENT = "PAYMENT";
 	protected static final String INVOICE = "INVOICE";
 	//End By Argenis Rodriguez
+	
+	//	Added By Jorge Colmenarez, 2024-01-18 10:57
+	//	Create local variables for filter by DocType/Role Access
+	public boolean filterbyDocType = false;
+	public int         	m_AD_Role_ID = 0;
+	//	End Jorge Colmenarez
 
 	public void dynInit() throws Exception
 	{
@@ -104,6 +110,11 @@ public class Allocation extends CustomForm
 		
 		m_AD_Org_ID = Env.getAD_Org_ID(Env.getCtx());
 		m_C_DocType_ID= MDocType.getDocType("CMA");
+		//	Added by Jorge Colmenarez, 2024-01-15 18:02
+		//	get Sysconfig value Allocation filter by Document Type
+		filterbyDocType = MSysConfig.getBooleanValue("ALLOCATION_FILTER_BY_DOCTYPE", false, Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID"), Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
+		m_AD_Role_ID = Env.getContextAsInt(Env.getCtx(), "#AD_Role_ID");   //  default
+		//	End Jorge Colmenarez
 		
 	}
 	
@@ -135,7 +146,7 @@ public class Allocation extends CustomForm
 		}
 	}
 	
-	public Vector<Vector<Object>> getPaymentData(boolean isMultiCurrency, Object date, IMiniTable paymentTable)
+	public Vector<Vector<Object>> getPaymentData(boolean isMultiCurrency, Object date, IMiniTable paymentTable, boolean isDocTypeFilter, int docTypePayment)
 	{		
 		/********************************
 		 *  Load unallocated Payments
@@ -158,6 +169,18 @@ public class Allocation extends CustomForm
 			sql.append(" AND p.C_Currency_ID=?");				//      #6
 		if (m_AD_Org_ID != 0 )
 			sql.append(" AND p.AD_Org_ID=" + m_AD_Org_ID);
+		
+		//	Added by Jorge Colmenarez, 2024-01-018 10:53
+		//	Filter by DocType Selected or Role Access
+		if(filterbyDocType) {
+			if(isDocTypeFilter && docTypePayment > 0) {
+				sql.append(" AND p.C_DocType_ID = "+docTypePayment+" ");
+			}else {
+				sql.append(" AND p.C_DocType_ID IN (select distinct C_DocType_ID from AD_Document_Action_Access daa where daa.AD_Role_ID IN ((select Included_Role_ID from AD_Role_Included ri where ri.AD_Role_ID="+m_AD_Role_ID+" union all select "+m_AD_Role_ID+"))) ");
+			}
+		}
+		//	End Jorge Colmenarez
+		
 		sql.append(" ORDER BY p.DateTrx,p.DocumentNo");
 		
 		// role security
@@ -262,7 +285,7 @@ public class Allocation extends CustomForm
 		paymentTable.autoSize();
 	}
 	
-	public Vector<Vector<Object>> getInvoiceData(boolean isMultiCurrency, Object date, IMiniTable invoiceTable)
+	public Vector<Vector<Object>> getInvoiceData(boolean isMultiCurrency, Object date, IMiniTable invoiceTable, boolean isDocTypeFilter, int docTypeInvoice)
 	{
 		/********************************
 		 *  Load unpaid Invoices
@@ -297,6 +320,17 @@ public class Allocation extends CustomForm
 			sql.append(" AND i.C_Currency_ID=?");                                   //  #8
 		if (m_AD_Org_ID != 0 ) 
 			sql.append(" AND i.AD_Org_ID=" + m_AD_Org_ID);
+		
+		//	Added by Jorge Colmenarez, 2024-01-018 10:53
+		//	Filter by DocType Selected or Role Access
+		if(filterbyDocType) {
+			if(isDocTypeFilter && docTypeInvoice > 0) {
+				sql.append(" AND i.C_DocType_ID = "+docTypeInvoice+" ");
+			}else {
+				sql.append(" AND i.C_DocType_ID IN (select distinct C_DocType_ID from AD_Document_Action_Access daa where daa.AD_Role_ID IN ((select Included_Role_ID from AD_Role_Included ri where ri.AD_Role_ID="+m_AD_Role_ID+" union all select "+m_AD_Role_ID+"))) ");
+			}
+		}
+		//	End Jorge Colmenarez
 		sql.append(" ORDER BY i.DateInvoiced, i.DocumentNo");
 		if (log.isLoggable(Level.FINE)) log.fine("InvSQL=" + sql.toString());
 		
@@ -1093,7 +1127,7 @@ public class Allocation extends CustomForm
 				KeyNamePair pp = (KeyNamePair)invoice.getValueAt(i, 2);    //  Value
 				//  Invoice variables
 				int C_Invoice_ID = pp.getKey();
-				String sql = "SELECT invoiceOpen(C_Invoice_ID, 0) "
+				String sql = "SELECT invoiceOpenConverted(C_Invoice_ID, "+m_C_Currency_ID+") "
 					+ "FROM C_Invoice WHERE C_Invoice_ID=?";
 				BigDecimal open = DB.getSQLValueBD(trxName, sql, C_Invoice_ID);
 				if (open != null && open.signum() == 0)	 {
