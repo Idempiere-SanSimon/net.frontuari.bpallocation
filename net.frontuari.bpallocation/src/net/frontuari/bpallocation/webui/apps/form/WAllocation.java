@@ -742,8 +742,10 @@ public class WAllocation extends Allocation
 		//	Added by Jorge Colmenarez, 2024-01-18 11:04
 		//	Support for filter by Payment DocType
 		int docTypePaymentId = 0;
-		if(docTypePaymentSearch.getValue() != null)
-			docTypePaymentId = (Integer)docTypePaymentSearch.getValue();
+		if (filterbyDocType) {
+			if(docTypePaymentSearch.getValue() != null)
+				docTypePaymentId = (Integer)docTypePaymentSearch.getValue();
+		}
 		Vector<Vector<Object>> data = getPaymentData(multiCurrency.isSelected(), dateField.getValue(), paymentTable, docTypeFilter.isSelected(), docTypePaymentId);
 		//	End Jorge Colmenarez
 		Vector<String> columnNames = getPaymentColumnNames(multiCurrency.isSelected());
@@ -763,8 +765,10 @@ public class WAllocation extends Allocation
 		//	Added by Jorge Colmenarez, 2024-01-18 11:04
 		//	Support for filter by Invoice DocType
 		int docTypeInvoiceId = 0;
-		if(docTypeInvoiceSearch.getValue() != null)
-			docTypeInvoiceId = (Integer)docTypeInvoiceSearch.getValue();
+		if (filterbyDocType) {
+			if(docTypeInvoiceSearch.getValue() != null)
+				docTypeInvoiceId = (Integer)docTypeInvoiceSearch.getValue();
+		}
 		data = getInvoiceData(multiCurrency.isSelected(), dateField.getValue(), invoiceTable, docTypeFilter.isSelected(), docTypeInvoiceId);
 		//	End Jorge Colmenarez
 		columnNames = getInvoiceColumnNames(multiCurrency.isSelected());
