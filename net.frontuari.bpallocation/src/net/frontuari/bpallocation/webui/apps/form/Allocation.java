@@ -47,6 +47,7 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
 
 import net.frontuari.bpallocation.base.CustomForm;
+import net.frontuari.bpallocation.model.MFTUPayment;
 
 
 public class Allocation extends CustomForm
@@ -138,7 +139,7 @@ public class Allocation extends CustomForm
 			{
 				public void run()
 				{
-					MPayment.setIsAllocated (Env.getCtx(), m_C_BPartner_ID, null);
+					MFTUPayment.setIsAllocated (Env.getCtx(), m_C_BPartner_ID, null);
 					MInvoice.setIsPaid (Env.getCtx(), m_C_BPartner_ID, null);
 				}
 			}.start();
