@@ -19,6 +19,7 @@ import org.compiere.model.MPaySelectionCheck;
 import org.compiere.model.MPayment;
 import org.compiere.model.MPaymentAllocate;
 import org.compiere.model.MPeriod;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.ModelValidator;
 import org.compiere.model.X_C_CashLine;
@@ -374,13 +375,26 @@ public class MFTUPayment extends MPayment{
 		BigDecimal total = getPayAmt();
 		if (!isReceipt())
 			total = total.negate();
-		boolean test = total.compareTo(alloc) == 0;
+		//Added by David Castillo 02/02/2024 Tolerance to set Allocated check due to conversion differences
+		BigDecimal tolerance = MSysConfig.getBigDecimalValue("AllocationTolerance", new BigDecimal("0.1"), getAD_Client_ID(), getAD_Org_ID());
+		BigDecimal difference = total.abs().subtract(alloc.abs());
+		if (difference.compareTo(tolerance)==1 || difference.compareTo(tolerance.negate())==-1) {
+			if (log.isLoggable(Level.FINE)) log.fine("Allocated=" + false 
+					+ " (" + alloc + "=" + total + ")");
+			return false;
+		}else {
+			if (log.isLoggable(Level.FINE)) log.fine("Allocated=" + true 
+					+ " (" + alloc + "=" + total + ")");
+			setIsAllocated(true);
+			return true;
+		}
+		/*boolean test = total.compareTo(alloc) == 0;
 		boolean change = test != isAllocated();
 		if (change)
 			setIsAllocated(test);
 		if (log.isLoggable(Level.FINE)) log.fine("Allocated=" + test 
 			+ " (" + alloc + "=" + total + ")");
-		return change;
+		return change;*/
 	}	//	testAllocation
 	
 	/**
@@ -393,6 +407,8 @@ public class MFTUPayment extends MPayment{
 		if (getC_Charge_ID() != 0)
 			return getPayAmt();
 		//
+		//1004113
+		
 		String sql = "SELECT SUM(currencyConvert(al.Amount,"
 				+ "ah.C_Currency_ID, p.C_Currency_ID,p.DateTrx,p.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID)) "
 			+ "FROM C_AllocationLine al"
@@ -403,7 +419,7 @@ public class MFTUPayment extends MPayment{
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
-		{
+		{	
 			pstmt = DB.prepareStatement(sql, get_TrxName());
 			pstmt.setInt(1, getC_Payment_ID());
 			rs = pstmt.executeQuery();

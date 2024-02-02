@@ -133,8 +133,8 @@ public class Allocation extends CustomForm
 
 		//	Async BPartner Test
 		Integer key = Integer.valueOf(m_C_BPartner_ID);
-		if (!m_bpartnerCheck.contains(key))
-		{
+	//	if (!m_bpartnerCheck.contains(key))
+	//	{
 			new Thread()
 			{
 				public void run()
@@ -144,7 +144,7 @@ public class Allocation extends CustomForm
 				}
 			}.start();
 			m_bpartnerCheck.add(key);
-		}
+		//}
 	}
 	
 	public Vector<Vector<Object>> getPaymentData(boolean isMultiCurrency, Object date, IMiniTable paymentTable, boolean isDocTypeFilter, int docTypePayment)
@@ -161,6 +161,7 @@ public class Allocation extends CustomForm
 			+ "currencyConvertPayment(p.C_Payment_ID,?,paymentAvailable(C_Payment_ID),p.DateTrx),"  //  7   #3, #4
 			+ "p.MultiplierAP " //	8
 			+ ",p.DateAcct "	//	9	//	Added by Jorge Colmenarez, 2022-01-05 16:39 RQ #0000225
+			+ ",p.Description "
 			+ "FROM C_Payment_v p"		//	Corrected for AP/AR
 			+ " INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE p.IsAllocated='N' AND p.Processed='Y'"
@@ -222,6 +223,7 @@ public class Allocation extends CustomForm
 //				line.add(rs.getBigDecimal(8));		//  6/8-Multiplier
 				//	Added by Jorge Colmenarez, 2022-01-05 16:41 RQ #0000225 
 				line.add(rs.getTimestamp(9));		//	9-DateAcct
+				line.add(rs.getString(10));
 				//
 				data.add(line);
 			}
@@ -256,6 +258,7 @@ public class Allocation extends CustomForm
 //		columnNames.add(" ");	//	Multiplier
 		//	Added by Jorge Colmenarez, 2022-01-05 16:44 RQ #0000225
 		columnNames.add(Msg.translate(Env.getCtx(), "DateAcct"));
+		columnNames.add(Msg.translate(Env.getCtx(), "Description"));
 		
 		return columnNames;
 	}
@@ -278,6 +281,7 @@ public class Allocation extends CustomForm
 
 		//	Added by Jorge Colmenarez, 2022-01-05 16:44 RQ #0000225
 		paymentTable.setColumnClass(i++, Timestamp.class, true);        //  9-DateAcct
+		paymentTable.setColumnClass(i++, String.class, true); 			// 10 - Description
 		//
 		i_payment = isMultiCurrency ? 7 : 5;
 		
@@ -313,6 +317,7 @@ public class Allocation extends CustomForm
 			+ "i.MultiplierAP "	//	9
 			//	Added by Jorge Colmenarez, 2022-01-05 16:46 RQ #0000225
 			+ ",i.DateAcct "	//	10
+			+ ",i.Description " //11 Description
 			+ "FROM C_Invoice_v i"		//  corrected for CM/Split
 			+ " INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE i.IsPaid='N' AND i.Processed='Y'"
@@ -382,6 +387,7 @@ public class Allocation extends CustomForm
 				//	Add when open <> 0 (i.e. not if no conversion rate)
 				//	Added by Jorge Colmenarez, 2022-01-05 16:46 RQ #0000225
 				line.add(rs.getTimestamp(10));       //  1-DateAcct
+				line.add(rs.getString(11));    //Description
 				if (Env.ZERO.compareTo(open) != 0)
 					data.add(line);
 			}
@@ -419,6 +425,7 @@ public class Allocation extends CustomForm
 //		columnNames.add(" ");	//	Multiplier
 		//	Added by Jorge Colmenarez, 2022-01-05 16:47 RQ #0000225
 		columnNames.add(Msg.translate(Env.getCtx(), "DateAcct"));
+		columnNames.add(Msg.translate(Env.getCtx(), "Description"));
 		
 		return columnNames;
 	}
@@ -442,7 +449,8 @@ public class Allocation extends CustomForm
 		invoiceTable.setColumnClass(i++, BigDecimal.class, true);		//	10-Conv Applied
 //		invoiceTable.setColumnClass(i++, BigDecimal.class, true);      	//  10-Multiplier
 		//	Added by Jorge Colmenarez, 2022-01-05 16:47 RQ #0000225
-		invoiceTable.setColumnClass(i++, Timestamp.class, true);        //  1-DateAcct
+		invoiceTable.setColumnClass(i++, Timestamp.class, true);        //  11-DateAcct
+		invoiceTable.setColumnClass(i++, String.class, true);
 		//  Table UI
 		invoiceTable.autoSize();
 	}
