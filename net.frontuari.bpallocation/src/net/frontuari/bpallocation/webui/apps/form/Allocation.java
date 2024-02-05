@@ -102,6 +102,8 @@ public class Allocation extends CustomForm
 	public boolean filterbyDocType = false;
 	public int         	m_AD_Role_ID = 0;
 	//	End Jorge Colmenarez
+	//Added by david castillo filter org by org of session
+	public boolean filterBySessionOrg = false;
 
 	public void dynInit() throws Exception
 	{
@@ -114,6 +116,7 @@ public class Allocation extends CustomForm
 		//	Added by Jorge Colmenarez, 2024-01-15 18:02
 		//	get Sysconfig value Allocation filter by Document Type
 		filterbyDocType = MSysConfig.getBooleanValue("ALLOCATION_FILTER_BY_DOCTYPE", false, Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID"), Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
+
 		m_AD_Role_ID = Env.getContextAsInt(Env.getCtx(), "#AD_Role_ID");   //  default
 		//	End Jorge Colmenarez
 		

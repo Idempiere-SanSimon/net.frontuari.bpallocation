@@ -176,6 +176,9 @@ public class WAllocation extends Allocation
 	 */
 	private void zkInit() throws Exception
 	{
+		
+		
+
 		//
 		Div div = new Div();
 		div.setStyle("height: 100%; width: 100%; overflow: auto;");
@@ -349,7 +352,11 @@ public class WAllocation extends Allocation
 		ZKUpdateUtil.setHflex(organizationPick.getComponent(), "true");
 		row.appendCellChild(organizationPick.getComponent(),1);
 		organizationPick.showMenu();		
-		
+		filterBySessionOrg = MSysConfig.getBooleanValue("ALLOCATION_FILTER_BY_SESSION_ORG", false, Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID"), Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
+		if (filterBySessionOrg) {
+			organizationPick.setValue(Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
+			organizationPick.setReadWrite(false);
+		}
 		row = rows.newRow();
 		row.appendCellChild(currencyLabel.rightAlign(),1);
 		ZKUpdateUtil.setHflex(currencyPick.getComponent(), "true");
