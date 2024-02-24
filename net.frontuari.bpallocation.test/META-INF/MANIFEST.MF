@@ -2,7 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: BP Allocation Test
 Bundle-SymbolicName: net.frontuari.bpallocation.test
-Bundle-Version: 10.0.0.qualifier
+Automatic-Module-Name: net.frontuari.bpallocation
+Bundle-Version: 11.0.0.qualifier
 Bundle-Vendor: Frontuari, C.A. <https://frontuari.net>
 Fragment-Host: net.frontuari.bpallocation
 Bundle-ClassPath: .,

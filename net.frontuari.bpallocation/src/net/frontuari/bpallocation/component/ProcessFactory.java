@@ -13,29 +13,22 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Copyright (C) 2022 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
+ * Copyright (C) 2024 Frontuari, C.A. <https://frontuari.net> and contributors (see README.md file).
  */
 
 package net.frontuari.bpallocation.component;
 
-import net.frontuari.bpallocation.base.CustomProcessFactory;
+import org.adempiere.base.AnnotationBasedProcessFactory;
 
 /**
  * Process Factory
  */
-public class ProcessFactory extends CustomProcessFactory {
+public class ProcessFactory extends AnnotationBasedProcessFactory {
 
-	/**
-	 * For initialize class. Register the process to build
-	 * 
-	 * <pre>
-	 * protected void initialize() {
-	 * 	registerProcess(PPrintPluginInfo.class);
-	 * }
-	 * </pre>
-	 */
 	@Override
-	protected void initialize() {
+	protected String[] getPackages() {
+		return new String[] { "net.frontuari.bpallocation.process" };
 	}
 
 }
+
