@@ -101,6 +101,9 @@ public class Allocation extends CustomForm
 	//	Create local variables for filter by DocType/Role Access
 	public boolean filterbyDocType = false;
 	public int         	m_AD_Role_ID = 0;
+	//	Added By Jorge Colmenarez, 2024-03-11 15:15
+	public int         m_C_Activity_ID = 0;
+	public int         m_User1_ID = 0;
 	//	End Jorge Colmenarez
 	//Added by david castillo filter org by org of session
 	public boolean filterBySessionOrg = false;
@@ -969,7 +972,7 @@ public class Allocation extends CustomForm
 		}
 		//
 		if (log.isLoggable(Level.CONFIG)) log.config("Client=" + AD_Client_ID + ", Org=" + AD_Org_ID
-			+ ", BPartner=" + C_BPartner_ID + ", Date=" + DateTrx);
+			+ ", BPartner=" + C_BPartner_ID + ", Date=" + DateTrx + ", DateAcct=" + DateAcct);
 
 		//  Payment - Loop and add them to paymentList/amountList
 		int pRows = payment.getRowCount();
@@ -1112,6 +1115,13 @@ public class Allocation extends CustomForm
 				Env.ZERO, Env.ZERO, Env.ZERO);
 			aLine.setC_Charge_ID(m_C_Charge_ID);
 			aLine.setC_BPartner_ID(m_C_BPartner_ID);
+			//	Added by Jorge Colmenarez, 2024-03-11 15:37
+			//	Support for set Activity and Cost Center
+			if(m_C_Activity_ID>0)
+				aLine.set_ValueOfColumn("C_Activity_ID", m_C_Activity_ID);
+			if(m_User1_ID>0)
+				aLine.set_ValueOfColumn("User1_ID", m_User1_ID);
+			//	End Jorge Colmenarez
 			if (!aLine.save(trxName)) {
 				StringBuilder msg = new StringBuilder("Allocation Line not saved - Charge=").append(m_C_Charge_ID);
 				throw new AdempiereException(msg.toString());
@@ -1173,7 +1183,93 @@ public class Allocation extends CustomForm
 
 	@Override
 	protected void initForm() {
-		// TODO Auto-generated method stub
+	}
+	
+	/**
+	 * Get Activity for Allocation
+	 * @return ArrayList
+	 */
+	public ArrayList<KeyNamePair> getActivities()
+	{
+		ArrayList<KeyNamePair> data = new ArrayList<KeyNamePair>();
+		String sql = null;
+		/**	Activity	**/
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			sql = MRole.getDefault().addAccessSQL(
+				"SELECT a.C_Activity_ID,a.Value||' - '||a.Name as Activity FROM C_Activity a WHERE a.IsSummary = 'N' AND a.IsActive = 'Y' ORDER BY a.Value", "a",
+				MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+
+			KeyNamePair dt = new KeyNamePair(0, "");
+			data.add(dt);
+			pstmt = DB.prepareStatement(sql, null);
+			rs = pstmt.executeQuery();
+
+			while (rs.next())
+			{
+				dt = new KeyNamePair(rs.getInt(1), rs.getString(2));
+				data.add(dt);
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, sql, e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
 		
+		return data;
+	}
+	
+	/**
+	 * Get Cost Center by Activity for Allocation
+	 * @return ArrayList
+	 */
+	public ArrayList<KeyNamePair> getCostCenter(int ActivityID)
+	{
+		ArrayList<KeyNamePair> data = new ArrayList<KeyNamePair>();
+		String sql = null;
+		/**	Cost Center	**/
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			sql = MRole.getDefault().addAccessSQL(
+				"SELECT a.C_ElementValue_ID,a.Value||' - '||a.Name as CostCenter FROM C_ElementValue a "
+				+ "JOIN FTU_Activity_User1_Access b ON (a.C_ElementValue_ID = b.User1_ID) "
+				+ "WHERE a.IsSummary = 'N' AND a.IsActive = 'Y' "
+				+ "AND b.C_Activity_ID = "+ActivityID+" "
+				+ "ORDER BY a.Value", "a",
+				MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+
+			KeyNamePair dt = new KeyNamePair(0, "");
+			data.add(dt);
+			pstmt = DB.prepareStatement(sql, null);
+			rs = pstmt.executeQuery();
+
+			while (rs.next())
+			{
+				dt = new KeyNamePair(rs.getInt(1), rs.getString(2));
+				data.add(dt);
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, sql, e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+		
+		return data;
 	}
 }
