@@ -102,8 +102,11 @@ public class Allocation extends CustomForm
 	public boolean filterbyDocType = false;
 	public int         	m_AD_Role_ID = 0;
 	//	Added By Jorge Colmenarez, 2024-03-11 15:15
+	//	Add Activity and Cost Center
 	public int         m_C_Activity_ID = 0;
 	public int         m_User1_ID = 0;
+	//	Create local variables for always update allocation date
+	public boolean alwaysUpdateAllocationDate = false;
 	//	End Jorge Colmenarez
 	//Added by david castillo filter org by org of session
 	public boolean filterBySessionOrg = false;
@@ -119,7 +122,8 @@ public class Allocation extends CustomForm
 		//	Added by Jorge Colmenarez, 2024-01-15 18:02
 		//	get Sysconfig value Allocation filter by Document Type
 		filterbyDocType = MSysConfig.getBooleanValue("ALLOCATION_FILTER_BY_DOCTYPE", false, Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID"), Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
-
+		//	Update Always AllocationDate
+		alwaysUpdateAllocationDate = MSysConfig.getBooleanValue("ALLOCATION_ALWAYS_UPDATE_ALLOCATIONDATE", false, Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID"), Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
 		m_AD_Role_ID = Env.getContextAsInt(Env.getCtx(), "#AD_Role_ID");   //  default
 		//	End Jorge Colmenarez
 		
@@ -911,8 +915,13 @@ public class Allocation extends CustomForm
 			if (((Boolean)payment.getValueAt(i, 0)).booleanValue())
 			{
 				Timestamp ts = (Timestamp)payment.getValueAt(i, 1);
-				if ( !isMultiCurrency )  // the converted amounts are only valid for the selected date
+				//	Modified by Jorge Colmenarez, 2024-03-18 21:24
+				//	Update Allocation Date when it's not Multicurrency or not always updated
+				if ( !isMultiCurrency && !alwaysUpdateAllocationDate )  // the converted amounts are only valid for the selected date
 					allocDate = TimeUtil.max(allocDate, ts);
+				else if(alwaysUpdateAllocationDate)
+					allocDate = TimeUtil.max(allocDate, ts);
+				//	End Jorge Colmenarez
 				BigDecimal bd = (BigDecimal)payment.getValueAt(i, i_payment);
 				totalPay = totalPay.add(bd);  //  Applied Pay
 				m_noPayments++;
@@ -935,8 +944,13 @@ public class Allocation extends CustomForm
 			if (((Boolean)invoice.getValueAt(i, 0)).booleanValue())
 			{
 				Timestamp ts = (Timestamp)invoice.getValueAt(i, 1);
-				if ( !isMultiCurrency )  // converted amounts only valid for selected date
+				//	Modified by Jorge Colmenarez, 2024-03-18 21:24
+				//	Update Allocation Date when it's not Multicurrency or not always updated
+				if ( !isMultiCurrency || !alwaysUpdateAllocationDate )  // the converted amounts are only valid for the selected date
 					allocDate = TimeUtil.max(allocDate, ts);
+				else if(alwaysUpdateAllocationDate)
+					allocDate = TimeUtil.max(allocDate, ts);
+				//	End Jorge Colmenarez
 				BigDecimal bd = (BigDecimal)invoice.getValueAt(i, i_applied);
 				totalInv = totalInv.add(bd);  //  Applied Inv
 				m_noInvoices++;

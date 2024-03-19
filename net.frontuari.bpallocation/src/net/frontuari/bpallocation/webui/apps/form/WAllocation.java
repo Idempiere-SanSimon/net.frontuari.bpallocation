@@ -782,7 +782,10 @@ public class WAllocation extends Allocation
 		}
 		//	Date for Multi-Currency
 		else if (name.equals("Date") && multiCurrency.isSelected())
-			loadBPartner();
+			//	Added by Jorge Colmenarez, 2024-03-18 21:45
+			//	LoadBPartner when Not Always Update AllocationDate
+			if(!alwaysUpdateAllocationDate)
+				loadBPartner();
 		//	Added by Jorge Colmenarez, 2024-01-18 11:00
 		//	Apply search when DocType Payment or Invoice Changed
 		if (name.equals("C_DocTypePayment_ID"))
@@ -877,11 +880,11 @@ public class WAllocation extends Allocation
 		
 		paymentInfo.setText(calculatePayment(paymentTable, multiCurrency.isSelected()));
 		invoiceInfo.setText(calculateInvoice(invoiceTable, multiCurrency.isSelected()));
-
+		
 		//	Set AllocationDate
 		if (allocDate != null) {
 			if (! allocDate.equals(dateField.getValue())) {
-                Clients.showNotification(Msg.getMsg(Env.getCtx(), "AllocationDateUpdated"), Clients.NOTIFICATION_TYPE_INFO, dateField.getComponent(), "start_before", -1, false);       
+                Clients.showNotification(Msg.getMsg(Env.getCtx(), "AllocationDateUpdated"), Clients.NOTIFICATION_TYPE_INFO, dateField.getComponent(), "start_before", -1, false);
                 dateField.setValue(allocDate);
 			}
 		}
