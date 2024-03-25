@@ -733,8 +733,8 @@ public class WAllocation extends Allocation
 	{
 		String name = e.getPropertyName();
 		Object value = e.getNewValue();
-		if (log.isLoggable(Level.CONFIG)) log.config(name + "=" + value);
-		if (value == null && (!name.equals("C_Charge_ID")||!name.equals("C_DocType_ID") ))
+		if (log.isLoggable(Level.WARNING)) log.warning(name + "=" + value);
+		if (value == null && (!name.equals("C_Charge_ID") && !name.equals("C_DocType_ID") ))
 			return;
 		
 		// Organization
@@ -756,6 +756,8 @@ public class WAllocation extends Allocation
 			}else {
 				activityPick.setEnabled(false);
 				costcenterPick.setEnabled(false);
+				activityPick.setSelectedIndex(0);
+				costcenterPick.setSelectedIndex(0);
 			}
 			//	End Jorge Colmenarez
 			setAllocateButton();
@@ -764,7 +766,6 @@ public class WAllocation extends Allocation
 		else if (name.equals("C_DocType_ID") )
 		{
 			m_C_DocType_ID = value!=null? ((Integer) value).intValue() : 0;
-			
 		}
 
 		//  BPartner
