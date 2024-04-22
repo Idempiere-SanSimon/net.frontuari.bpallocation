@@ -670,10 +670,12 @@ public class WAllocation extends Allocation
 			KeyNamePair activity = activityPick.getSelectedItem().getValue();
 			m_C_Activity_ID = activity.getKey();
 			if(m_C_Activity_ID>0) {
+				costcenterPick.removeAllItems();
 				ArrayList<KeyNamePair> costcenterData = getCostCenter(m_C_Activity_ID);
 				for(KeyNamePair pp : costcenterData)
 					costcenterPick.appendItem(pp.getName(), pp);
 				costcenterPick.setSelectedIndex(0);
+				costcenterPick.focus();
 			}
 		}
 		else if(e.getTarget().equals(costcenterPick)) {
@@ -682,6 +684,12 @@ public class WAllocation extends Allocation
 		}
 		else if (e.getTarget().equals(refreshButton))
 		{
+			if(showActivityAndCostCenter) {
+				activityPick.setEnabled(false);
+				costcenterPick.setEnabled(false);
+				activityPick.setSelectedIndex(0);
+				costcenterPick.setSelectedIndex(0);
+			}
 			loadBPartner();
 		}
 	}   //  actionPerformed
