@@ -646,6 +646,7 @@ public class FTUBPAllocation extends CustomForm {
 		int AD_Client_ID = Env.getContextAsInt(Env.getCtx(), m_WindowNo, "AD_Client_ID");
 		int AD_Org_ID = Env.getContextAsInt(Env.getCtx(), m_WindowNo, "AD_Org_ID");
 		int C_BPartner_ID = m_C_BPartner_ID;
+		int C_BPartner2_ID = m_C_BPartner2_ID;
 		int C_Order_ID = 0;
 		int C_CashLine_ID = 0;
 		Timestamp DateTrx = (Timestamp)date;
@@ -808,7 +809,10 @@ public class FTUBPAllocation extends CustomForm {
 			MAllocationLine aLine = new MAllocationLine (alloc, chargeAmt.negate(), 
 				Env.ZERO, Env.ZERO, Env.ZERO);
 			aLine.setC_Charge_ID(m_C_Charge_ID);
-			aLine.setC_BPartner_ID(m_C_BPartner_ID);
+			if(paymentList.size()<=0)
+				aLine.setC_BPartner_ID(m_C_BPartner_ID);
+			else
+				aLine.setC_BPartner_ID(m_C_BPartner2_ID);
 			if (!aLine.save(trxName)) {
 				StringBuilder msg = new StringBuilder("Allocation Line not saved - Charge=").append(m_C_Charge_ID);
 				throw new AdempiereException(msg.toString());
