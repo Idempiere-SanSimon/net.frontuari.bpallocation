@@ -667,8 +667,16 @@ public class FTUVAllocation extends CustomForm {
 				else if(alwaysUpdateAllocationDate)
 					allocDate = TimeUtil.max(allocDate, ts);
 				//	Added by Jorge Colmenarez, 2024-12-12 10:07
+				//	Set OpenAmt
+				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, 4);
 				BigDecimal bd = (BigDecimal)payment.getValueAt(i, i_payment);
-				totalPay = totalPay.add(bd);  //  Applied Pay
+				if(openAmt.compareTo(bd)<=0)
+					totalPay = totalPay.add(bd);  //  Applied Pay
+				else {
+					totalPay = totalPay.add(openAmt);  //  Applied Pay
+					payment.setValueAt(totalPay, i, i_payment);
+				}
+				//	End Jorge Colmenarez
 				m_noPayments++;
 				if (log.isLoggable(Level.FINE)) log.fine("Payment_" + i + " = " + bd + " - Total=" + totalPay);
 			}

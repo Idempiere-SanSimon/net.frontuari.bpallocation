@@ -741,7 +741,6 @@ public class WAllocation extends Allocation
 	{
 		String name = e.getPropertyName();
 		Object value = e.getNewValue();
-		if (log.isLoggable(Level.WARNING)) log.warning(name + "=" + value);
 		if (value == null && (!name.equals("C_Charge_ID") && !name.equals("C_DocType_ID") ))
 			return;
 		
@@ -805,21 +804,21 @@ public class WAllocation extends Allocation
 	}   //  vetoableChange
 	
 	private void setAllocateButton() {
-			if (totalDiff.signum() == 0 ^ m_C_Charge_ID > 0 )
-			{
-				allocateButton.setEnabled(true);
-			// chargePick.setValue(m_C_Charge_ID);
-			}
-			else
-			{
-				allocateButton.setEnabled(false);
-			}
+		if (totalDiff.signum() == 0 ^ m_C_Charge_ID > 0 )
+		{
+			allocateButton.setEnabled(true);
+		// chargePick.setValue(m_C_Charge_ID);
+		}
+		else
+		{
+			allocateButton.setEnabled(false);
+		}
 
-			if ( totalDiff.signum() == 0 )
-			{
-					chargePick.setValue(null);
-					m_C_Charge_ID = 0;
-	   		}
+		if ( totalDiff.signum() == 0 )
+		{
+				chargePick.setValue(null);
+				m_C_Charge_ID = 0;
+   		}
 	}
 	/**
 	 *  Load Business Partner Info

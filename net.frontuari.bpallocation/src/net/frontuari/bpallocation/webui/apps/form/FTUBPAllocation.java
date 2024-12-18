@@ -669,8 +669,16 @@ public class FTUBPAllocation extends CustomForm {
 					allocDate = TimeUtil.max(allocDate, ts);
 				else if(alwaysUpdateAllocationDate)
 					allocDate = TimeUtil.max(allocDate, ts);
+				//	Set OpenAmt
+				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, 4);
 				BigDecimal bd = (BigDecimal)payment.getValueAt(i, i_payment);
-				totalPay = totalPay.add(bd);  //  Applied Pay
+				if(openAmt.compareTo(bd)<=0)
+					totalPay = totalPay.add(bd);  //  Applied Pay
+				else {
+					totalPay = totalPay.add(openAmt);  //  Applied Pay
+					payment.setValueAt(totalPay, i, i_payment);
+				}
+				//	End Jorge Colmenarez
 				m_noPayments++;
 				if (log.isLoggable(Level.FINE)) log.fine("Payment_" + i + " = " + bd + " - Total=" + totalPay);
 			}
