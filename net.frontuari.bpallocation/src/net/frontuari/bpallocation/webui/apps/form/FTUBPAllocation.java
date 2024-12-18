@@ -670,7 +670,7 @@ public class FTUBPAllocation extends CustomForm {
 				else if(alwaysUpdateAllocationDate)
 					allocDate = TimeUtil.max(allocDate, ts);
 				//	Set OpenAmt
-				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, 4);
+				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, (isMultiCurrency ? 7 : 5));
 				BigDecimal bd = (BigDecimal)payment.getValueAt(i, i_payment);
 				if(openAmt.compareTo(bd)<=0)
 					totalPay = totalPay.add(bd);  //  Applied Pay

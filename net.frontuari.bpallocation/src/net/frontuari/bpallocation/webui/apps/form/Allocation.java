@@ -923,7 +923,7 @@ public class Allocation extends CustomForm
 					allocDate = TimeUtil.max(allocDate, ts);
 				//	Added by Jorge Colmenarez, 2024-12-12 10:07
 				//	Set OpenAmt
-				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, 4);
+				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, (isMultiCurrency ? 7 : 4));
 				BigDecimal bd = (BigDecimal)payment.getValueAt(i, i_payment);
 				if(openAmt.compareTo(bd)<=0)
 					totalPay = totalPay.add(bd);  //  Applied Pay

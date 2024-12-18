@@ -180,7 +180,7 @@ public class FTUVAllocation extends CustomForm {
 			+ " INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE p.IsAllocated='N' AND p.Processed='Y'"
 			+ " AND p.C_Charge_ID IS NULL"		//	Prepayments OK
-			+ " AND p.C_BPartner_ID IN (?,?)");                   		//      #5,#6
+			+ " AND p.C_BPartner_ID = ? ");                   		//      #5,#6
 		if (!isMultiCurrency)
 			sql.append(" AND p.C_Currency_ID=?");				//      #7
 		if (m_AD_Org_ID != 0 )
@@ -210,14 +210,13 @@ public class FTUVAllocation extends CustomForm {
 			pstmt.setInt(1, m_C_Currency_ID);
 			pstmt.setInt(2, m_C_Currency_ID);
 			pstmt.setInt(3, m_C_BPartner_ID);
-			pstmt.setInt(4, m_C_BPartner2_ID);
 			if (!isMultiCurrency)
-				pstmt.setInt(5, m_C_Currency_ID);
+				pstmt.setInt(4, m_C_Currency_ID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
 				Vector<Object> line = new Vector<Object>();
-				line.add(new Boolean(false));       //  0-Selection
+				line.add(Boolean.FALSE);       //  0-Selection
 				line.add(rs.getTimestamp(1));       //  1-TrxDate
 				KeyNamePair pp = new KeyNamePair(rs.getInt(3), rs.getString(2));
 				line.add(pp);                       //  2-DocumentNo
@@ -339,7 +338,7 @@ public class FTUVAllocation extends CustomForm {
 			+ " INNER JOIN AD_Org bp ON (i.AD_Org_ID = bp.AD_Org_ID) "
 			+ " INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
 			+ "WHERE i.IsPaid='N' AND i.Processed='Y'"
-			+ " AND i.C_BPartner_ID IN (?,?)");                                            //  #7
+			+ " AND i.C_BPartner_ID = ? ");                                            //  #7
 		if (!isMultiCurrency)
 			sql.append(" AND i.C_Currency_ID=?");                                   //  #8
 		if (m_AD_OrgTarget_ID != 0 ) 
@@ -371,9 +370,8 @@ public class FTUVAllocation extends CustomForm {
 			pstmt.setInt(3, m_C_Currency_ID);
 			pstmt.setTimestamp(4, (Timestamp)date);
 			pstmt.setInt(5, m_C_BPartner_ID);
-			pstmt.setInt(6, m_C_BPartner2_ID);
 			if (!isMultiCurrency)
-				pstmt.setInt(7, m_C_Currency_ID);
+				pstmt.setInt(6, m_C_Currency_ID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
@@ -668,7 +666,7 @@ public class FTUVAllocation extends CustomForm {
 					allocDate = TimeUtil.max(allocDate, ts);
 				//	Added by Jorge Colmenarez, 2024-12-12 10:07
 				//	Set OpenAmt
-				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, 4);
+				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, (isMultiCurrency ? 7 : 5));
 				BigDecimal bd = (BigDecimal)payment.getValueAt(i, i_payment);
 				if(openAmt.compareTo(bd)<=0)
 					totalPay = totalPay.add(bd);  //  Applied Pay
