@@ -679,7 +679,8 @@ public class FTUBPAllocation extends CustomForm {
 					totalPay = totalPay.add(bd);  //  Applied Pay
 				else {
 					totalPay = totalPay.add(openAmt);  //  Applied Pay
-					payment.setValueAt(totalPay, i, i_payment);
+					if(totalPay.compareTo(bd)!=0)
+						payment.setValueAt(totalPay, i, i_payment);
 				}
 				//	End Jorge Colmenarez
 				m_noPayments++;
