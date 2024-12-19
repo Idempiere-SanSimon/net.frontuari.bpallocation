@@ -668,7 +668,7 @@ public class FTUVAllocation extends CustomForm {
 				//	Set OpenAmt
 				BigDecimal openAmt = (BigDecimal)payment.getValueAt(i, (isMultiCurrency ? 7 : 5));
 				BigDecimal bd = (BigDecimal)payment.getValueAt(i, i_payment);
-				if(openAmt.compareTo(bd)<=0)
+				if(openAmt.compareTo(bd)>=0)
 					totalPay = totalPay.add(bd);  //  Applied Pay
 				else {
 					totalPay = totalPay.add(openAmt);  //  Applied Pay
