@@ -170,7 +170,7 @@ public class FTUBPAllocation extends CustomForm {
 		StringBuilder sql = new StringBuilder("SELECT p.DateTrx,p.DocumentNo,p.C_Payment_ID,"  //  1..3
 			+ "c.ISO_Code,p.PayAmt,"                            //  4..5
 			+ "currencyConvertPayment(p.C_Payment_ID,?,p.PayAmt,p.DateTrx),"//  6   #1, #2
-			+ "currencyConvertPayment(p.C_Payment_ID,?,paymentAvailable(C_Payment_ID),p.DateTrx),"  //  7   #3, #4
+			+ "PaymentAvailableConverted(C_Payment_ID,?),"  //  7   #3, #4
 			+ "p.MultiplierAP "
 			+ ",bp.Name " // 9
 			+ ",p.DateAcct "	//	10	//	Added by Jorge Colmenarez, 2022-01-05 16:39 RQ #0000225
