@@ -247,11 +247,7 @@ public class WFTUBPAllocation extends FTUBPAllocation implements ValueChangeList
 		ZKUpdateUtil.setHflex(organizationPick.getComponent(), "true");
 		row.appendCellChild(organizationPick.getComponent(),2);
 		organizationPick.showMenu();	
-		filterBySessionOrg = MSysConfig.getBooleanValue("ALLOCATION_FILTER_BY_SESSION_ORG", false, Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID"), Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
-		if (filterBySessionOrg) {
-			organizationPick.setValue(Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
-			organizationPick.setReadWrite(false);
-		}
+		organizationPick.setValue(Env.getContextAsInt(Env.getCtx(), "#AD_Org_ID"));
 		row.appendCellChild(new Space(),1);		
 		Hbox box = new Hbox();
 		box.appendChild(dateLabel.rightAlign());
